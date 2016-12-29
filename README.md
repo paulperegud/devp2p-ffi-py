@@ -1,2 +1,2 @@
-To allow linker to find libethcore_network.so when building cffi_devp2p do
+To allow linker to find libdevp2p_ffi.so when building cffi_devp2p do
 `export LD_LIBRARY_PATH=.`
