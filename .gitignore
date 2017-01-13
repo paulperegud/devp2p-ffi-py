@@ -1,4 +1,4 @@
 *.pyc
-/cffi_devp2p.c
-/libdevp2p_ffi.h
-/libdevp2p_ffi.so
+cffi_devp2p.*
+libdevp2p_ffi.h
+libdevp2p_ffi.so

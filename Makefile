@@ -23,3 +23,6 @@ clean:
 	sudo rm /usr/include/libdevp2p_ffi.h
 	sudo rm /usr/lib/libdevp2p_ffi.so
 
+# TODO for later:
+# automate building system using CI (via github)
+# Build static files
