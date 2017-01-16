@@ -19,7 +19,7 @@ class PingPong(host.BaseProtocol):
     peer = None
     rx = [0,0,0,0,0,0]
     def __init__(self):
-        host.BaseProtocol.__init__(self, "png", [1])
+        host.BaseProtocol.__init__(self, "png", [1], 10)
     def read(self, io_ptr, peer_id, packet_id, data):
         with self.lock:
             self.rx[packet_id-1] += 1

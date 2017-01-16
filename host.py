@@ -45,13 +45,15 @@ class DevP2P():
         self.__protocols.append(userdata) # don't let the GC collect this!
         protocol.service = self.service
         protocol_id = ffi.new("char[]", protocol.id)
+        cbs = ffi.new("struct FFICallbacks*", (lib.initialize_cb,
+                                               lib.connected_cb,
+                                               lib.read_cb,
+                                               lib.disconnected_cb))
         err = lib.network_service_add_protocol(self.service,
                                                userdata,
                                                protocol_id,
-                                               lib.initialize_cb,
-                                               lib.connected_cb,
-                                               lib.read_cb,
-                                               lib.disconnected_cb
+                                               protocol.max_packet_id,
+                                               cbs
         )
         if err != 0:
             raise DevP2PException("Failed to register a subprotocol")
@@ -68,24 +70,29 @@ class BaseProtocol():
     id = None
     name = ""
     versions = [1]
+    max_packet_id = 0
 
     service = None
     lock = threading.Lock()
 
-    def __init__(self, protocol_id, versions, name = ""):
+    def __init__(self, protocol_id, versions, max_packet_id, name = ""):
         assert len(protocol_id) == 3
         assert all([ v >= 0 and v <= 255 for v in versions ])
+        assert 1 <= max_packet_id and max_packet_id <= 255
         self.id = protocol_id
+        self.max_packet_id = max_packet_id
         self.name = name
         self.versions = versions
 
     def send(self, peer_id, packet_id, data_bytearray):
+        assert packet_id <= self.max_packet_id
         buff = ffi.from_buffer(data_bytearray)
         size = ffi.sizeof(buff)
         protocol_id = ffi.new("char[]", self.id)
         lib.protocol_send(self.service, protocol_id, peer_id, packet_id, buff, size)
 
     def reply(self, context, peer_id, packet_id, data_bytearray):
+        assert packet_id <= self.max_packet_id
         buff = ffi.from_buffer(data_bytearray)
         size = ffi.sizeof(buff)
         lib.protocol_reply(context, peer_id, packet_id, buff, size)

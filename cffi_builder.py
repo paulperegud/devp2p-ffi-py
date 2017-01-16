@@ -12,17 +12,27 @@ def _build_bindings():
     extern "Python+C" void read_cb(void*, void*, size_t, uint8_t, uint8_t*, size_t);
     extern "Python+C" void disconnected_cb(void*, void*, size_t);
 
+    typedef void (*InitializeCB)(void*, void*);
+    typedef void (*ConnectedCB)(void*, void*, size_t);
+    typedef void (*ReadCB)(void*, void*, size_t,
+                           uint8_t, uint8_t*, size_t);
+    typedef void (*DisconnectedCB)(void*, void*, size_t);
+
+    struct FFICallbacks {
+        InitializeCB initialize;
+        ConnectedCB connect;
+        ReadCB read;
+        DisconnectedCB disconnect;
+    };
+
     void* network_service(unsigned char* errno);
     uint8_t network_service_start(void*);
     void network_service_free(void*);
     uint8_t network_service_add_protocol(void*,
                                          void*,
                                          char* protocol_id,
-                                         void (*initialize_cb)(void*, void*),
-                                         void (*connected_cb)(void*, void*, size_t),
-                                         void (*read_cb)(void*, void*, size_t,
-                                                         uint8_t, uint8_t*, size_t),
-                                         void (*disconnected_cb)(void*, void*, size_t)
+                                         uint8_t max_packet_id,
+                                         struct FFICallbacks* cbs
                                         );
 
     uint8_t peer_protocol_version(void* io, size_t peer, unsigned char* errno);
