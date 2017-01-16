@@ -17,6 +17,7 @@ def _build_bindings():
     void network_service_free(void*);
     uint8_t network_service_add_protocol(void*,
                                          void*,
+                                         char* protocol_id,
                                          void (*initialize_cb)(void*, void*),
                                          void (*connected_cb)(void*, void*, size_t),
                                          void (*read_cb)(void*, void*, size_t,
@@ -25,7 +26,8 @@ def _build_bindings():
                                         );
 
     uint8_t peer_protocol_version(void* io, size_t peer, unsigned char* errno);
-    void protocol_send(void* service, size_t peer, uint8_t packet, char* buffer, size_t size);
+    void protocol_send(void* service, char* protocol_id,
+                       size_t peer, uint8_t packet, char* buffer, size_t size);
     void protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
 
     uint8_t network_service_add_reserved_peer(void*, char*);

@@ -44,14 +44,14 @@ class DevP2P():
         userdata = ffi.new_handle(protocol)
         self.__protocols.append(userdata) # don't let the GC collect this!
         protocol.service = self.service
-        # protocol_id = ffi.new("char[]", protocol.id)
+        protocol_id = ffi.new("char[]", protocol.id)
         err = lib.network_service_add_protocol(self.service,
                                                userdata,
+                                               protocol_id,
                                                lib.initialize_cb,
                                                lib.connected_cb,
                                                lib.read_cb,
                                                lib.disconnected_cb
-                                               # protocol_id
         )
         if err != 0:
             raise DevP2PException("Failed to register a subprotocol")
@@ -79,13 +79,14 @@ class BaseProtocol():
         self.name = name
         self.versions = versions
 
-    def send(self, peer_id, packet_id, data):
-        buff = ffi.from_buffer(data)
+    def send(self, peer_id, packet_id, data_bytearray):
+        buff = ffi.from_buffer(data_bytearray)
         size = ffi.sizeof(buff)
-        lib.protocol_send(self.service, peer_id, packet_id, buff, size)
+        protocol_id = ffi.new("char[]", self.id)
+        lib.protocol_send(self.service, protocol_id, peer_id, packet_id, buff, size)
 
-    def reply(self, context, peer_id, packet_id, data):
-        buff = ffi.from_buffer(data)
+    def reply(self, context, peer_id, packet_id, data_bytearray):
+        buff = ffi.from_buffer(data_bytearray)
         size = ffi.sizeof(buff)
         lib.protocol_reply(context, peer_id, packet_id, buff, size)
 
@@ -95,6 +96,7 @@ class BaseProtocol():
         if errno[0] != 0:
             raise UnknownPeer("Peer unknown or using wrong subprotocol")
         return res
+
 
     # callbacks are below
     def initialize(self, io_ptr):
