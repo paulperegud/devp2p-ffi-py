@@ -45,6 +45,8 @@ class DevP2P():
         self.__protocols.append(userdata) # don't let the GC collect this!
         protocol.service = self.service
         protocol_id = ffi.new("char[]", protocol.id)
+        buff = bytearray(protocol.versions)
+        ffi_versions = ffi.from_buffer(buff)
         cbs = ffi.new("struct FFICallbacks*", (lib.initialize_cb,
                                                lib.connected_cb,
                                                lib.read_cb,
@@ -53,6 +55,8 @@ class DevP2P():
                                                userdata,
                                                protocol_id,
                                                protocol.max_packet_id,
+                                               ffi_versions,
+                                               len(buff),
                                                cbs
         )
         if err != 0:
@@ -78,11 +82,11 @@ class BaseProtocol():
     def __init__(self, protocol_id, versions, max_packet_id, name = ""):
         assert len(protocol_id) == 3
         assert all([ v >= 0 and v <= 255 for v in versions ])
+        self.versions = versions
         assert 1 <= max_packet_id and max_packet_id <= 255
         self.id = protocol_id
         self.max_packet_id = max_packet_id
         self.name = name
-        self.versions = versions
 
     def send(self, peer_id, packet_id, data_bytearray):
         assert packet_id <= self.max_packet_id

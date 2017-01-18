@@ -32,10 +32,14 @@ def _build_bindings():
                                          void*,
                                          char* protocol_id,
                                          uint8_t max_packet_id,
+                                         char* versions,
+                                         size_t versions_len,
                                          struct FFICallbacks* cbs
                                         );
 
-    uint8_t peer_protocol_version(void* io, size_t peer, unsigned char* errno);
+    uint8_t peer_protocol_version(void* io,
+                                  char* protocol_id,
+                                  size_t peer, unsigned char* errno);
     void protocol_send(void* service, char* protocol_id,
                        size_t peer, uint8_t packet, char* buffer, size_t size);
     void protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
