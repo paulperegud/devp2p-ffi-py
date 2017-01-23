@@ -108,19 +108,18 @@ class BaseProtocol():
             raise UnknownPeer("Peer unknown or using wrong subprotocol")
         return res
 
-
     # callbacks are below
     def initialize(self, io_ptr):
-        print "BaseProtocol instance!: init"
+        pass
 
     def connected(self, io_ptr, peer_id):
-        print "BaseProtocol instance!: connected"
+        pass
 
     def read(self, io_ptr, peer_id, packet_id, data):
-        print "BaseProtocol instance!: read"
+        pass
 
     def disconnected(self, io_ptr, peer_id):
-        print "BaseProtocol instance!: disconnected"
+        pass
 
 # block of functions below route functional C-style callbacks to protocol objects
 @ffi.def_extern()
