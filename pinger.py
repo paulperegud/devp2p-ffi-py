@@ -42,7 +42,7 @@ def main(do_connect):
 
 def connect(conn):
     bp = PingPong()
-    N = 40
+    N = 200
     conn.add_subprotocol(bp)
     server = read_node_name()
     assert 0 == conn.add_reserved_peer(server)
@@ -56,16 +56,14 @@ def connect(conn):
         print bp.rx
         print sorted(set(bp.rx))
         res = [0, N] == sorted(set(bp.rx))
-    if not res:
-        print "still losing packets; see https://github.com/ethcore/parity/issues/4107"
-        assert False
+        assert res, "losing packets (https://github.com/ethcore/parity/issues/4107 ?)"
 
 def listen(conn):
     bp = PingPong()
     conn.add_subprotocol(bp)
     my_node_name = conn.node_name()
     write_node_name(my_node_name)
-    time.sleep(10)
+    time.sleep(15)
 
 def read_node_name():
     with open('../devp2p/util/network/nodename', 'r') as f:
