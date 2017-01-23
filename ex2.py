@@ -26,7 +26,7 @@ class Ex2(host.BaseProtocol):
 
 def main(do_connect):
     with host.DevP2P() as conn:
-        assert 0 == conn.start()
+        conn.start()
         if do_connect:
             connect(conn)
         else:

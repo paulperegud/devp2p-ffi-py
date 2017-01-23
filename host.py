@@ -7,20 +7,40 @@ class DevP2PException(Exception):
 class UnknownPeer(DevP2PException):
     pass
 
+class NetworkError(DevP2PException):
+    pass
+
 class DevP2P():
     __protocols = []
     service = None
+    config = None
 
     @staticmethod
-    def service():
+    def config_local():
+        return lib.config_local()
+
+    @staticmethod
+    def config_with_port(port):
+        assert port > 0
+        assert port < 2**16
+        return lib.config_with_port(port)
+
+    @staticmethod
+    def service(config):
         errno = ffi.new("unsigned char *")
-        service = lib.network_service(errno)
+        service = lib.network_service(config, errno)
         if errno[0] != 0:
-            raise DevP2PException("Can't start devp2p service instance")
+            raise DevP2PException("Can't initialize devp2p service instance")
         return service
 
+    def __init__(self, config = None):
+        if config == None:
+            self.config = DevP2P.config_local()
+            return
+        self.config = config
+
     def __enter__(self):
-        self.service = DevP2P.service()
+        self.service = DevP2P.service(self.config)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -28,7 +48,9 @@ class DevP2P():
         self.service = None
 
     def start(self):
-        return lib.network_service_start(self.service)
+        res = lib.network_service_start(self.service)
+        if res != 0:
+            raise NetworkError("Can't start service. Port in use?")
 
     def node_name(self):
         ptr = lib.network_service_node_name(self.service)

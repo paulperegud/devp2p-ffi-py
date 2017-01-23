@@ -25,7 +25,9 @@ def _build_bindings():
         DisconnectedCB disconnect;
     };
 
-    void* network_service(unsigned char* errno);
+    void* config_local();
+    void* config_with_port(uint16_t port);
+    void* network_service(void* config, unsigned char* errno);
     uint8_t network_service_start(void*);
     void network_service_free(void*);
     uint8_t network_service_add_protocol(void*,
