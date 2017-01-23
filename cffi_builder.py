@@ -44,7 +44,7 @@ def _build_bindings():
                                   size_t peer, unsigned char* errno);
     void protocol_send(void* service, char* protocol_id,
                        size_t peer, uint8_t packet, char* buffer, size_t size);
-    void protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
+    uint8_t protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
 
     uint8_t network_service_add_reserved_peer(void*, char*);
     char* network_service_node_name(void*);

@@ -1,6 +1,7 @@
 import socket
 
 import host
+import errors
 from cffi_devp2p import ffi, lib
 
 import pytest
@@ -48,7 +49,7 @@ def test_bind_to_inuse_port():
     sock.bind(('', 0))
     port = sock.getsockname()[1]
     with host.DevP2P(host.DevP2P.config_with_port(port)) as s:
-        with pytest.raises(host.NetworkError):
+        with pytest.raises(errors.DevP2PNetworkError):
             s.start()
 
 def test_class():
@@ -57,7 +58,7 @@ def test_class():
         s.start()
         bp = host.BaseProtocol("abc", [1], 2)
         s.add_subprotocol(bp)
-        assert 0 == s.add_reserved_peer(other_node)
+        s.add_reserved_peer(other_node)
 
 # helper functions
 def get_free_inet_port():

@@ -1,14 +1,6 @@
 from cffi_devp2p import ffi, lib
+from errors import *
 import threading
-
-class DevP2PException(Exception):
-    pass
-
-class UnknownPeer(DevP2PException):
-    pass
-
-class NetworkError(DevP2PException):
-    pass
 
 class DevP2P():
     __protocols = []
@@ -50,7 +42,7 @@ class DevP2P():
     def start(self):
         res = lib.network_service_start(self.service)
         if res != 0:
-            raise NetworkError("Can't start service. Port in use?")
+            raise_errno(res, "Can't start service. Port in use?")
 
     def node_name(self):
         ptr = lib.network_service_node_name(self.service)
@@ -59,7 +51,7 @@ class DevP2P():
         return ffi.string(ptr)
 
     def add_reserved_peer(self, node_name):
-        return lib.network_service_add_reserved_peer(self.service, node_name)
+        mb_raise_errno(lib.network_service_add_reserved_peer(self.service, node_name))
 
     def add_subprotocol(self, protocol):
         assert isinstance(protocol, BaseProtocol)
@@ -81,9 +73,7 @@ class DevP2P():
                                                len(buff),
                                                cbs
         )
-        if err != 0:
-            raise DevP2PException("Failed to register a subprotocol")
-        return
+        mb_raise_errno(err, "Failed to register a subprotocol")
 
 class BaseProtocol():
     """
@@ -127,7 +117,7 @@ class BaseProtocol():
         errno = ffi.new("unsigned char *")
         res = lib.peer_protocol_version(context, peer_id, errno)
         if errno[0] != 0:
-            raise UnknownPeer("Peer unknown or using wrong subprotocol")
+            raise_errno(errno[0], "Peer unknown or using wrong subprotocol")
         return res
 
     # callbacks are below
