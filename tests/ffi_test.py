@@ -7,6 +7,48 @@ from cffi_devp2p import ffi, lib
 import pytest
 import time
 
+def test_StrLen():
+    a = "0123456789"
+    b = "abcdefghij"
+    xa = host.mk_str_len(a)
+    xb = host.mk_str_len(b)
+    lib.unpack_and_print(xa, xb)
+    assert False
+
+def test_StrLen_null():
+    string = None
+    x = host.mk_str_len(string)
+    a = "0123456789"
+    xa = host.mk_str_len(a)
+    lib.unpack_and_print(x, xa)
+    assert False
+
+def test_Configuration():
+    conf = host.DevP2PConfig()
+    conf.config_path = "/tmp/devp2p_config_path"
+    conf_ptr = conf.register()
+    # assert False
+
+def test_Configuration():
+    conf = host.DevP2PConfig()
+    conf.boot_node = "this is a boot node"
+    conf_ptr = conf.register()
+    # assert False
+
+def test_Configuration_null_config_path():
+    conf = host.DevP2PConfig()
+    conf.config_path = "cba"
+    conf.net_config_path = "abc"
+    conf_ptr = conf.register()
+    # assert False
+
+def test_config_details():
+    conf = host.DevP2PConfig()
+    conf.config_path = "/tmp/devp2p_config_path"
+    conf_ptr = conf.register()
+    with host.DevP2P(conf_ptr) as s:
+        s.start()
+
 def test_freeing():
     with host.DevP2P() as s:
         pass

@@ -18,6 +18,17 @@ def _build_bindings():
                            uint8_t, uint8_t*, size_t);
     typedef void (*DisconnectedCB)(void*, void*, size_t);
 
+    struct StrLen {
+        size_t len;
+        char* buff;
+    };
+
+    struct Configuration {
+        struct StrLen* config_path;
+        struct StrLen* net_config_path;
+        struct StrLen* listen_address;
+    };
+
     struct FFICallbacks {
         InitializeCB initialize;
         ConnectedCB connect;
@@ -27,6 +38,10 @@ def _build_bindings():
 
     void* config_local();
     void* config_with_port(uint16_t port);
+    void* config_detailed(struct Configuration*);
+
+    void unpack_and_print(struct StrLen*, struct StrLen*);
+
     void* network_service(void* config, unsigned char* errno);
     uint8_t network_service_start(void*);
     void network_service_free(void*);

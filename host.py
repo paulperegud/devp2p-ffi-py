@@ -1,6 +1,18 @@
 from cffi_devp2p import ffi, lib
 from errors import *
 import threading
+import weakref
+
+ffi_weakkeydict = weakref.WeakKeyDictionary()
+
+class NonReservedPeerMode:
+    ACCEPT = 1
+    DENY = 2
+
+class AllowIP:
+    ALL = 1
+    PRIVATE = 2
+    PUBLIC = 3
 
 class DevP2P():
     __protocols = []
@@ -74,6 +86,61 @@ class DevP2P():
                                                cbs
         )
         mb_raise_errno(err, "Failed to register a subprotocol")
+
+class DevP2PConfig():
+    # Directory path to store general network configuration. None means nothing will be saved
+    config_path = None # string
+    # Directory path to store network-specific configuration. None means nothing will be saved
+    net_config_path = None # string
+    # IP address to listen for incoming connections. Listen to all connections by default
+    listen_address = None # string
+
+    def register(self):
+        config_path = mk_str_len(self.config_path)
+        net_config_path = mk_str_len(self.net_config_path)
+        listen_address = mk_str_len(self.listen_address)
+        zzz = (config_path,
+               net_config_path,
+               listen_address)
+        conf = ffi.new("struct Configuration*", zzz)
+        ffi_weakkeydict[conf] = zzz
+        return lib.config_detailed(conf)
+
+def mk_str_len(string):
+    if string is None:
+        buff = ffi.NULL
+    else:
+        buff = ffi.from_buffer(string)
+    size = ffi.sizeof(buff)
+    res = ffi.new("struct StrLen*", (size, buff))
+    return res
+
+    # # IP address to advertise. Detected automatically if none.
+    # public_address = None # string
+    # # Port for UDP connections, same as TCP by default
+    # udp_port = None # number
+    # # Enable NAT configuration
+    # nat_enabled = True
+    # # Enable discovery
+    # discovery_enabled = True
+    # # List of initial node addresses
+    # boot_nodes = [] # strings
+    # # Use provided node key instead of default
+    # use_secret = None
+    # # Minimum number of connected peers to maintain
+    # min_peers = 25
+    # # Maximum allowed number of peers
+    # max_peers = 50
+    # # Maximum handshakes
+    # max_handshakes = 64
+    # # Reserved protocols. Peers with <key> protocol get additional <value> connection slots.
+    # reserved_protocols = {}
+    # # List of reserved node addresses.
+    # reserved_nodes = [] # strings
+    # # The non-reserved peer mode.
+    # non_reserved_mode = NonReservedPeerMode.ACCEPT
+    # # IP filter
+    # allow_ips = AllowIP.ALL
 
 class BaseProtocol():
     """
