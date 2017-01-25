@@ -13,7 +13,7 @@ def test_StrLen():
     xa = host.mk_str_len(a)
     xb = host.mk_str_len(b)
     lib.unpack_and_print(xa, xb)
-    assert False
+    # assert False
 
 def test_StrLen_null():
     string = None
@@ -21,7 +21,7 @@ def test_StrLen_null():
     a = "0123456789"
     xa = host.mk_str_len(a)
     lib.unpack_and_print(x, xa)
-    assert False
+    # assert False
 
 def test_Configuration():
     conf = host.DevP2PConfig()

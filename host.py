@@ -87,23 +87,28 @@ class DevP2P():
         )
         mb_raise_errno(err, "Failed to register a subprotocol")
 
+"""Configuration for DevP2P Service"""
 class DevP2PConfig():
     # Directory path to store general network configuration. None means nothing will be saved
     config_path = None # string
     # Directory path to store network-specific configuration. None means nothing will be saved
     net_config_path = None # string
-    # IP address to listen for incoming connections. Listen to all connections by default
-    listen_address = None # string
+    # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet
+    # Connection to bootstrap node does not seem to trigger `connected` callback
+    boot_node = None # string
 
+    """Obtain a pointer to configuration to use in DevP2P.service call"""
     def register(self):
         config_path = mk_str_len(self.config_path)
         net_config_path = mk_str_len(self.net_config_path)
-        listen_address = mk_str_len(self.listen_address)
+        listen_address = mk_str_len(None)
+        boot_node = mk_str_len(self.boot_node)
         zzz = (config_path,
                net_config_path,
-               listen_address)
+               listen_address,
+               boot_node)
         conf = ffi.new("struct Configuration*", zzz)
-        ffi_weakkeydict[conf] = zzz
+        ffi_weakkeydict[conf] = (zzz)
         return lib.config_detailed(conf)
 
 def mk_str_len(string):
@@ -113,8 +118,11 @@ def mk_str_len(string):
         buff = ffi.from_buffer(string)
     size = ffi.sizeof(buff)
     res = ffi.new("struct StrLen*", (size, buff))
+    ffi_weakkeydict[res] = (size, buff)
     return res
 
+    # # IP address to listen for incoming connections. Listen to all connections by default
+    # listen_address = None # string
     # # IP address to advertise. Detected automatically if none.
     # public_address = None # string
     # # Port for UDP connections, same as TCP by default
@@ -123,8 +131,6 @@ def mk_str_len(string):
     # nat_enabled = True
     # # Enable discovery
     # discovery_enabled = True
-    # # List of initial node addresses
-    # boot_nodes = [] # strings
     # # Use provided node key instead of default
     # use_secret = None
     # # Minimum number of connected peers to maintain

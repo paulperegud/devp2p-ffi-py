@@ -1,11 +1,12 @@
 """Python DevP2P pinger using parity's devp2p via FFI binding
 
 Usage:
-  pinger.py (--connect | --listen)
+  pinger.py (--connect | --listen | --bootstrap)
 
 Options:
   -h, --help     Show this screen.
   -c, --connect     Connect to node listed in 'nodefile' file
+  -b, --bootstrap   Use node specified 'nodefile' file as boot_node
   -l, --listen      Write your hostname into 'nodefile' and listen
 
 """
@@ -32,8 +33,12 @@ class PingPong(host.BaseProtocol):
         print "connected"
         self.peer = peer_id
 
-def main(do_connect):
-    with host.DevP2P() as conn:
+def main(do_connect, do_bootstrap):
+    conf = host.DevP2PConfig()
+    if do_bootstrap:
+        conf.boot_node = read_node_name()
+    conf_ptr = conf.register()
+    with host.DevP2P(conf_ptr) as conn:
         conn.start()
         if do_connect:
             connect(conn)
@@ -77,5 +82,6 @@ def write_node_name(node_name):
 if __name__ == '__main__':
     arguments = docopt(__doc__)
     do_connect = arguments['--connect']
-    main(do_connect)
+    do_bootstrap = arguments['--bootstrap']
+    main(do_connect, do_bootstrap)
 
