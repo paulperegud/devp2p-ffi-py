@@ -93,15 +93,16 @@ class DevP2PConfig():
     config_path = None # string
     # Directory path to store network-specific configuration. None means nothing will be saved
     net_config_path = None # string
-    # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet
-    # Connection to bootstrap node does not seem to trigger `connected` callback
+    # IP address to listen for incoming connections. Listen to all connections by default
+    listen_address = None # string
+    # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet.
     boot_node = None # string
 
     """Obtain a pointer to configuration to use in DevP2P.service call"""
     def register(self):
         config_path = mk_str_len(self.config_path)
         net_config_path = mk_str_len(self.net_config_path)
-        listen_address = mk_str_len(None)
+        listen_address = mk_str_len(self.listen_address)
         boot_node = mk_str_len(self.boot_node)
         zzz = (config_path,
                net_config_path,
@@ -109,7 +110,10 @@ class DevP2PConfig():
                boot_node)
         conf = ffi.new("struct Configuration*", zzz)
         ffi_weakkeydict[conf] = (zzz)
-        return lib.config_detailed(conf)
+        errno = ffi.new("unsigned char *")
+        res = lib.config_detailed(conf, errno)
+        mb_raise_errno(errno[0], "Bad arg while processing configuration")
+        return res
 
 def mk_str_len(string):
     if string is None:

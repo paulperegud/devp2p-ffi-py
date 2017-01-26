@@ -23,17 +23,33 @@ def test_StrLen_null():
     lib.unpack_and_print(x, xa)
     # assert False
 
-def test_Configuration():
+def test_Configuration_config_path():
     conf = host.DevP2PConfig()
     conf.config_path = "/tmp/devp2p_config_path"
     conf_ptr = conf.register()
     # assert False
 
-def test_Configuration():
+def test_Configuration_boot_node():
     conf = host.DevP2PConfig()
     conf.boot_node = "this is a boot node"
     conf_ptr = conf.register()
     # assert False
+
+def test_Configuration_listen_address_err():
+    conf = host.DevP2PConfig()
+    conf.listen_address = "0.0.0.0"
+    with pytest.raises(errors.DevP2PNetworkError):
+        conf_ptr = conf.register()
+
+def test_Configuration_listen_address_ok():
+    conf = host.DevP2PConfig()
+    conf.listen_address = "0.0.0.0:80"
+    conf_ptr = conf.register()
+
+def test_Configuration_listen_address_ok2():
+    conf = host.DevP2PConfig()
+    conf.listen_address = "example.com:80"
+    conf_ptr = conf.register()
 
 def test_Configuration_null_config_path():
     conf = host.DevP2PConfig()

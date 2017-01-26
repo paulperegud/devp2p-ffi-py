@@ -39,7 +39,7 @@ def _build_bindings():
 
     void* config_local();
     void* config_with_port(uint16_t port);
-    void* config_detailed(struct Configuration*);
+    void* config_detailed(struct Configuration*, unsigned char* errno);
 
     void unpack_and_print(struct StrLen*, struct StrLen*);
 
