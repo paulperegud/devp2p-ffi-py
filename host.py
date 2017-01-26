@@ -95,6 +95,8 @@ class DevP2PConfig():
     net_config_path = None # string
     # IP address to listen for incoming connections. Listen to all connections by default
     listen_address = None # string
+    # IP address to advertise. Detected automatically if none.
+    public_address = None # string
     # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet.
     boot_node = None # string
 
@@ -103,10 +105,12 @@ class DevP2PConfig():
         config_path = mk_str_len(self.config_path)
         net_config_path = mk_str_len(self.net_config_path)
         listen_address = mk_str_len(self.listen_address)
+        public_address = mk_str_len(self.public_address)
         boot_node = mk_str_len(self.boot_node)
         zzz = (config_path,
                net_config_path,
                listen_address,
+               public_address,
                boot_node)
         conf = ffi.new("struct Configuration*", zzz)
         ffi_weakkeydict[conf] = (zzz)
@@ -125,10 +129,6 @@ def mk_str_len(string):
     ffi_weakkeydict[res] = (size, buff)
     return res
 
-    # # IP address to listen for incoming connections. Listen to all connections by default
-    # listen_address = None # string
-    # # IP address to advertise. Detected automatically if none.
-    # public_address = None # string
     # # Port for UDP connections, same as TCP by default
     # udp_port = None # number
     # # Enable NAT configuration

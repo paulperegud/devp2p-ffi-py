@@ -51,6 +51,11 @@ def test_Configuration_listen_address_ok2():
     conf.listen_address = "example.com:80"
     conf_ptr = conf.register()
 
+def test_Configuration_public_address_ok():
+    conf = host.DevP2PConfig()
+    conf.public_address = "8.8.8.8:12345"
+    conf_ptr = conf.register()
+
 def test_Configuration_null_config_path():
     conf = host.DevP2PConfig()
     conf.config_path = "cba"
