@@ -43,8 +43,6 @@ def _build_bindings():
     void* config_with_port(uint16_t port);
     void* config_detailed(struct Configuration*, unsigned char* errno);
 
-    void unpack_and_print(struct StrLen*, struct StrLen*);
-
     void* network_service(void* config, unsigned char* errno);
     uint8_t network_service_start(void*);
     void network_service_free(void*);

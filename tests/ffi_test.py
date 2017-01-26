@@ -12,20 +12,6 @@ def register(param, value):
     setattr(conf, param, value)
     conf.register()
 
-def test_StrLen():
-    a = "0123456789"
-    b = "abcdefghij"
-    xa = host.mk_str_len(a)
-    xb = host.mk_str_len(b)
-    lib.unpack_and_print(xa, xb)
-
-def test_StrLen_null():
-    string = None
-    x = host.mk_str_len(string)
-    a = "0123456789"
-    xa = host.mk_str_len(a)
-    lib.unpack_and_print(x, xa)
-
 def test_Configuration_config_path():
     register("config_path", "/tmp/devp2p_config_path")
     register("boot_node", "this is a boot node")

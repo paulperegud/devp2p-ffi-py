@@ -98,7 +98,7 @@ class DevP2PConfig():
     # IP address to advertise. Detected automatically if none.
     public_address = None # string
     # Port for UDP connections, same as TCP by default
-    udp_port = 0 # number; 0 means use same as TCP
+    udp_port = 0 # number; 0 means "use same as TCP"
     # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet.
     boot_node = None # string
 
