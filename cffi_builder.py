@@ -28,6 +28,7 @@ def _build_bindings():
         struct StrLen* net_config_path;
         struct StrLen* listen_address;
         struct StrLen* public_address;
+        uint16_t udp_port;
         struct StrLen* boot_node;
     };
 

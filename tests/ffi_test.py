@@ -7,13 +7,17 @@ from cffi_devp2p import ffi, lib
 import pytest
 import time
 
+def register(param, value):
+    conf = host.DevP2PConfig()
+    setattr(conf, param, value)
+    conf.register()
+
 def test_StrLen():
     a = "0123456789"
     b = "abcdefghij"
     xa = host.mk_str_len(a)
     xb = host.mk_str_len(b)
     lib.unpack_and_print(xa, xb)
-    # assert False
 
 def test_StrLen_null():
     string = None
@@ -21,47 +25,23 @@ def test_StrLen_null():
     a = "0123456789"
     xa = host.mk_str_len(a)
     lib.unpack_and_print(x, xa)
-    # assert False
 
 def test_Configuration_config_path():
-    conf = host.DevP2PConfig()
-    conf.config_path = "/tmp/devp2p_config_path"
-    conf_ptr = conf.register()
-    # assert False
-
-def test_Configuration_boot_node():
-    conf = host.DevP2PConfig()
-    conf.boot_node = "this is a boot node"
-    conf_ptr = conf.register()
-    # assert False
-
-def test_Configuration_listen_address_err():
-    conf = host.DevP2PConfig()
-    conf.listen_address = "0.0.0.0"
+    register("config_path", "/tmp/devp2p_config_path")
+    register("boot_node", "this is a boot node")
     with pytest.raises(errors.DevP2PNetworkError):
-        conf_ptr = conf.register()
-
-def test_Configuration_listen_address_ok():
-    conf = host.DevP2PConfig()
-    conf.listen_address = "0.0.0.0:80"
-    conf_ptr = conf.register()
-
-def test_Configuration_listen_address_ok2():
-    conf = host.DevP2PConfig()
-    conf.listen_address = "example.com:80"
-    conf_ptr = conf.register()
-
-def test_Configuration_public_address_ok():
-    conf = host.DevP2PConfig()
-    conf.public_address = "8.8.8.8:12345"
-    conf_ptr = conf.register()
-
-def test_Configuration_null_config_path():
-    conf = host.DevP2PConfig()
-    conf.config_path = "cba"
-    conf.net_config_path = "abc"
-    conf_ptr = conf.register()
-    # assert False
+        conf_ptr = register("listen_address", "0.0.0.0")
+    register("listen_address", "0.0.0.0:80")
+    register("listen_address", "example.com:80")
+    register("public_address", "8.8.8.8:12345")
+    register("config_path", "cba")
+    register("udp_port", 15)
+    register("udp_port", 0)
+    with pytest.raises(OverflowError):
+        register("udp_port", -1)
+    with pytest.raises(OverflowError):
+        register("udp_port", 5 + 2**16)
+    register("net_config_path", "abc")
 
 def test_config_details():
     conf = host.DevP2PConfig()
