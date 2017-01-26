@@ -71,12 +71,12 @@ def listen(conn):
     time.sleep(15)
 
 def read_node_name():
-    with open('../devp2p/util/network/nodename', 'r') as f:
+    with open('nodename', 'r') as f:
         node_name = f.read()
         return node_name
 
 def write_node_name(node_name):
-    with open('../devp2p/util/network/nodename', 'w') as f:
+    with open('nodename', 'w') as f:
         f.write(node_name)
 
 if __name__ == '__main__':
