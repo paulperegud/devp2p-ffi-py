@@ -36,7 +36,7 @@ def connect(conn):
     bp = Ex2()
     conn.add_subprotocol(bp)
     server = read_node_name()
-    assert 0 == conn.add_reserved_peer(server)
+    conn.add_reserved_peer(server)
     time.sleep(3)
 
 def listen(conn):

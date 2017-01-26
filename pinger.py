@@ -50,7 +50,7 @@ def connect(conn):
     N = 200
     conn.add_subprotocol(bp)
     server = read_node_name()
-    assert 0 == conn.add_reserved_peer(server)
+    conn.add_reserved_peer(server)
     time.sleep(3)
     if bp.peer is not None:
         for i in xrange(N):
