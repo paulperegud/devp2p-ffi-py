@@ -23,13 +23,18 @@ def _build_bindings():
         char* buff;
     };
 
+    struct BootNodes {
+        size_t nodes_number;
+        struct StrLen** nodes;
+    };
+
     struct Configuration {
         struct StrLen* config_path;
         struct StrLen* net_config_path;
         struct StrLen* listen_address;
         struct StrLen* public_address;
         uint16_t udp_port;
-        struct StrLen* boot_node;
+        struct BootNodes* boot_nodes;
     };
 
     struct FFICallbacks {

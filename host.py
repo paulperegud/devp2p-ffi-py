@@ -108,13 +108,15 @@ class DevP2PConfig():
         net_config_path = mk_str_len(self.net_config_path)
         listen_address = mk_str_len(self.listen_address)
         public_address = mk_str_len(self.public_address)
-        boot_node = mk_str_len(self.boot_node)
+        c_boot_node = [mk_str_len(self.boot_node), mk_str_len(self.boot_node)]
+        nodes = ffi.new("struct StrLen *[]", c_boot_node)
+        boot_nodes = ffi.new("struct BootNodes*", (len(c_boot_node),nodes))
         zzz = (config_path,
                net_config_path,
                listen_address,
                public_address,
                self.udp_port,
-               boot_node)
+               boot_nodes)
         conf = ffi.new("struct Configuration*", zzz)
         ffi_weakkeydict[conf] = (zzz)
         errno = ffi.new("unsigned char *")
