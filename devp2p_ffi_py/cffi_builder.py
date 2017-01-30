@@ -1,10 +1,17 @@
 import cffi
+import os
 
-def _build_bindings():
+ffi = None
+
+def get_ffi(**kwargs):
     ffibuilder = cffi.FFI()
-    ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>',
-                          libraries=["devp2p_ffi"]
-    )
+    kwargs['libraries'] = ["devp2p_ffi"]
+    if 'INCLUDE_DIR' in os.environ:
+        kwargs['include_dirs'] = [absolute(os.environ['INCLUDE_DIR'])]
+    if 'LIB_DIR' in os.environ:
+        kwargs['library_dirs'] = [absolute(os.environ['LIB_DIR'])]
+    print "kwargs: {}".format(kwargs)
+    ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>' , **kwargs)
     ffibuilder.cdef("""
 
     extern "Python+C" void initialize_cb(void*, void*);
@@ -71,9 +78,17 @@ def _build_bindings():
     char* network_service_node_name(void*);
 
     """)
-    ffibuilder.compile()
+    return ffibuilder
+
+def absolute(*paths):
+    op = os.path
+    return op.realpath(op.abspath(op.join(op.dirname(__file__), *paths)))
 
 if __name__ == "__main__":
     print "building bindings..."
     _build_bindings()
     print "building bindings... done!"
+    exit(0)
+
+if ffi is None:
+    ffi = get_ffi()

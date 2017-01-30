@@ -12,15 +12,16 @@ Options:
 """
 from docopt import docopt
 
-import host
+from devp2p_ffi_py.service import *
+# import devp2p_ffi_py.service
 import time
 import threading
 
-class PingPong(host.BaseProtocol):
+class PingPong(BaseProtocol):
     peer = None
     rx = [0,0,0,0,0,0]
     def __init__(self):
-        host.BaseProtocol.__init__(self, "png", [1], 10)
+        BaseProtocol.__init__(self, "png", [1], 10)
     def read(self, io_ptr, peer_id, packet_id, data):
         with self.lock:
             self.rx[packet_id-1] += 1
@@ -34,11 +35,11 @@ class PingPong(host.BaseProtocol):
         self.peer = peer_id
 
 def main(do_connect, do_bootstrap):
-    conf = host.DevP2PConfig()
+    conf = DevP2PConfig()
     if do_bootstrap:
         conf.boot_node = read_node_name()
     conf_ptr = conf.register()
-    with host.DevP2P(conf_ptr) as conn:
+    with DevP2P(conf_ptr) as conn:
         conn.start()
         if do_connect:
             connect(conn)

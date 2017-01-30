@@ -1,0 +1,3 @@
+[submodule "devp2p-ffi"]
+	path = devp2p-ffi
+	url = https://github.com/paulperegud/devp2p-ffi.git
