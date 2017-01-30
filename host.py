@@ -100,17 +100,23 @@ class DevP2PConfig():
     # Port for UDP connections, same as TCP by default
     udp_port = 0 # number; 0 means "use same as TCP"
     # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet.
-    boot_node = None # string
+    boot_nodes = None # string
 
     """Obtain a pointer to configuration to use in DevP2P.service call"""
     def register(self):
+        def make_boot_nodes(lst):
+            if lst:
+                pyarr = [ mk_str_len(bn) for bn in self.boot_nodes ]
+                struct = ffi.new("struct StrLen *[]", pyarr)
+                ptr = ffi.new("struct BootNodes*", (len(pyarr), struct))
+                return ptr
+            else:
+                return ffi.NULL
         config_path = mk_str_len(self.config_path)
         net_config_path = mk_str_len(self.net_config_path)
         listen_address = mk_str_len(self.listen_address)
         public_address = mk_str_len(self.public_address)
-        c_boot_node = [mk_str_len(self.boot_node), mk_str_len(self.boot_node)]
-        nodes = ffi.new("struct StrLen *[]", c_boot_node)
-        boot_nodes = ffi.new("struct BootNodes*", (len(c_boot_node),nodes))
+        boot_nodes = make_boot_nodes(self.boot_nodes)
         zzz = (config_path,
                net_config_path,
                listen_address,

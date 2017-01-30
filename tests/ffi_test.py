@@ -9,12 +9,16 @@ import time
 
 def register(param, value):
     conf = host.DevP2PConfig()
-    setattr(conf, param, value)
+    if hasattr(conf, param):
+        setattr(conf, param, value)
+    else:
+        raise AttributeError("No such attribute!")
     conf.register()
 
 def test_Configuration_config_path():
     register("config_path", "/tmp/devp2p_config_path")
-    register("boot_node", "this is a boot node")
+    other_node = "enode://d742115276d73957a7b478d2b376eb02e183426827e3ab4ba483942d1421db4717350355099184bd823cbd29e1ca3fe4ceeb59a5bcb043655a2f8a4dfe3c129b@127.0.0.1:41223"
+    register("boot_nodes", ["this is a boot node", other_node])
     with pytest.raises(errors.DevP2PNetworkError):
         conf_ptr = register("listen_address", "0.0.0.0")
     register("listen_address", "0.0.0.0:80")
