@@ -6,10 +6,8 @@ ffi = None
 def get_ffi(**kwargs):
     ffibuilder = cffi.FFI()
     kwargs['libraries'] = ["devp2p_ffi"]
-    if 'INCLUDE_DIR' in os.environ:
-        kwargs['include_dirs'] = [absolute(os.environ['INCLUDE_DIR'])]
-    if 'LIB_DIR' in os.environ:
-        kwargs['library_dirs'] = [absolute(os.environ['LIB_DIR'])]
+    kwargs['include_dirs'] = [absolute("../devp2p-ffi/include/")]
+    kwargs['library_dirs'] = [absolute("../devp2p-ffi/target/release/")]
     print "kwargs: {}".format(kwargs)
     ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>' , **kwargs)
     ffibuilder.cdef("""
