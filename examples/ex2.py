@@ -11,11 +11,11 @@ Options:
 """
 from docopt import docopt
 
-import host
+from devp2p_ffi_py.service import *
 import time
 import threading
 
-class Ex2(host.BaseProtocol):
+class Ex2(BaseProtocol):
     def read(self, io_ptr, peer_id, packet_id, data):
         pass
 
@@ -25,7 +25,7 @@ class Ex2(host.BaseProtocol):
         print "protocol version: {}".format(vsn)
 
 def main(do_connect):
-    with host.DevP2P() as conn:
+    with DevP2P() as conn:
         conn.start()
         if do_connect:
             connect(conn)
