@@ -1,2 +1,6 @@
-To allow linker to find libdevp2p_ffi.so when building cffi_devp2p do
-`export LD_LIBRARY_PATH=.`
+Barebones devp2p python binding.
+
+Building:  
+1) git submodule --update init  
+2) pip install rust_ext  
+3) python setup.py install
