@@ -1,5 +1,4 @@
 docopt
 cffi==1.9
-devp2p
 pytest==2.9.0
 
