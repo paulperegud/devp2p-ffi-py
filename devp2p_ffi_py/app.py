@@ -1,10 +1,8 @@
 from UserDict import IterableUserDict
-from service import BaseService
-from slogging import get_logger
+from serviceffi import BaseService
 import utils
 import crypto
 from devp2p import __version__
-log = get_logger('app')
 
 
 class BaseApp(object):
@@ -23,7 +21,6 @@ class BaseApp(object):
         """
         assert isinstance(service, BaseService)
         assert service.name not in self.services
-        log.info('registering service', service=service.name)
         self.services[service.name] = service
         setattr(self.services, service.name, service)
 
@@ -51,13 +48,9 @@ def main():
     import io
     import sys
     import signal
-    import gevent
     from peermanager import PeerManager
     from jsonrpc import JSONRPCServer
     from discovery import NodeDiscovery
-    import slogging
-    log = slogging.get_logger('app')
-    slogging.configure(config_string=':debug')
 
     # read config
     sample_config = """
@@ -85,9 +78,6 @@ node:
         log.info('loading config from', fn=fn)
         config = yaml.load(open(fn))
 
-    # stop on every unhandled exception!
-    gevent.get_hub().SYSTEM_ERROR = BaseException  # (KeyboardInterrupt, SystemExit, SystemError)
-
     print config
     # create app
     app = BaseApp(config)
@@ -99,14 +89,6 @@ node:
 
     # start app
     app.start()
-
-    # wait for interupt
-    evt = gevent.event.Event()
-    # gevent.signal(signal.SIGQUIT, gevent.kill) ## killall pattern
-    gevent.signal(signal.SIGQUIT, evt.set)
-    gevent.signal(signal.SIGTERM, evt.set)
-    gevent.signal(signal.SIGINT, evt.set)
-    evt.wait()
 
     # finally stop
     app.stop()

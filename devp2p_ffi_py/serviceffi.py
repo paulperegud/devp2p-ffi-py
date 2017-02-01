@@ -65,6 +65,10 @@ class DevP2P():
     def add_reserved_peer(self, node_name):
         mb_raise_errno(lib.network_service_add_reserved_peer(self.service, node_name))
 
+    def disconnect_peer(self, peer_id, ban = False):
+        """NetworkContext.{disable|disconnect}_peer"""
+        raise NotImplemented()
+
     def add_subprotocol(self, protocol):
         assert isinstance(protocol, BaseProtocol)
         userdata = ffi.new_handle(protocol)
@@ -161,9 +165,10 @@ def mk_str_len(string):
     # # IP filter
     # allow_ips = AllowIP.ALL
 
-class BaseProtocol():
+"""Thin wrapper around subprotocol FFI callbacks"""
+class ProtocolFFI():
     """
-    Devp2p subprotocol definition.
+    Callbacks
     :member id: Subprotocol ID, can be represented by 3 chars
     :member name: Subprotocol name (not transmitted through the network)
     :member versions: array of numbers in 0..255 range, 1 uint8_t each

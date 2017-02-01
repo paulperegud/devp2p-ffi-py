@@ -1,10 +1,5 @@
-import gevent
 import rlp
 from rlp import sedes
-from multiplexer import Packet
-from service import WiredService
-import slogging
-log = slogging.get_logger('protocol')
 
 
 class ProtocolError(Exception):
@@ -14,8 +9,34 @@ class ProtocolError(Exception):
 class SubProtocolError(ProtocolError):
     pass
 
+"""
+original idea: one instance per peer, each instance peer is represented by greenlet
+rework:
+1) introduce connection class
+   create on connect
+   destroy on disconnect?
+2) introduce peer class
+   create on connect
+   mark disconnected on disconnect
 
-class BaseProtocol(gevent.Greenlet):
+ETH: peers are identical. We get blocks, re-transmit blocks. We get transaction messages, we re-transmit them.
+
+In Golem peers are not identical. Pair of peers may have contractual obligations.
+Do we need to be able to try to reconnect to a peer? Yes. Requestor might be on mobile network. Same goes for provider.
+Solution A: peer is an object, strong ref.
+On connect - create, set strong ref, set flag
+On disconnect: set flag, removing strong ref
+Solution B: peer is an object, weak+strong ref
+On connect, check if one exists.
+  If exists - set flag, set strong ref
+  If does not exists: create and set flag, set strong ref, set weak ref
+On disconnect: set flag, remove strong ref
+
+Swarm: peers are not identical. Only some of the peers have THE data.
+Check how swarm deals with this.
+
+"""
+class BaseProtocol():
 
     """
     A protocol mediates between the network and the service.
@@ -116,7 +137,6 @@ class BaseProtocol(gevent.Greenlet):
         self.peer = peer
         self.service = service
         self._setup()
-        super(BaseProtocol, self).__init__()
 
     def __repr__(self):
         return '<{} {}>'.format(self.__class__.__name__, self.peer)
@@ -172,7 +192,6 @@ class BaseProtocol(gevent.Greenlet):
 
     def start(self):
         log.debug('starting', proto=self)
-        super(BaseProtocol, self).start()
         self.service.on_wire_protocol_start(self)
 
     def _run(self):
@@ -182,4 +201,3 @@ class BaseProtocol(gevent.Greenlet):
         log.debug('stopping', proto=self)
         self.is_stopped = True
         self.service.on_wire_protocol_stop(self)
-        super(BaseProtocol, self).kill()

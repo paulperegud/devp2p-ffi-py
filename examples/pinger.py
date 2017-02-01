@@ -18,10 +18,17 @@ import time
 import threading
 
 class PingPong(BaseProtocol):
+    protocol_id = 1
+    network_id = 0
+    max_cmd_id = 1
+    name = "example"
+    version = 1
     peer = None
     rx = [0,0,0,0,0,0]
-    def __init__(self):
+
+    def __init__(self, service):
         BaseProtocol.__init__(self, "png", [1], 10)
+
     def read(self, io_ptr, peer_id, packet_id, data):
         with self.lock:
             self.rx[packet_id-1] += 1
@@ -33,6 +40,17 @@ class PingPong(BaseProtocol):
     def connected(self, _, peer_id):
         print "connected"
         self.peer = peer_id
+
+    class token(BaseProtocol.command):
+
+        """
+        message sending a token and a nonce
+        """
+        cmd_id = 0
+
+        structure = [
+            ('token', Token)
+        ]
 
 def main(do_connect, do_bootstrap):
     conf = DevP2PConfig()
