@@ -13,11 +13,10 @@ Options:
 from docopt import docopt
 
 from devp2p_ffi_py.service import *
-# import devp2p_ffi_py.service
 import time
 import threading
 
-class PingPong(BaseProtocol):
+class PingPong(ProtocolFFI):
     protocol_id = 1
     network_id = 0
     max_cmd_id = 1
@@ -26,8 +25,8 @@ class PingPong(BaseProtocol):
     peer = None
     rx = [0,0,0,0,0,0]
 
-    def __init__(self, service):
-        BaseProtocol.__init__(self, "png", [1], 10)
+    def __init__(self):
+        ProtocolFFI.__init__(self, "png", [1], 10)
 
     def read(self, io_ptr, peer_id, packet_id, data):
         with self.lock:
@@ -41,23 +40,23 @@ class PingPong(BaseProtocol):
         print "connected"
         self.peer = peer_id
 
-    class token(BaseProtocol.command):
+    # class token(ProtocolFFI.command):
 
-        """
-        message sending a token and a nonce
-        """
-        cmd_id = 0
+    #     """
+    #     message sending a token and a nonce
+    #     """
+    #     cmd_id = 0
 
-        structure = [
-            ('token', Token)
-        ]
+    #     structure = [
+    #         ('token', Token)
+    #     ]
 
 def main(do_connect, do_bootstrap):
-    conf = DevP2PConfig()
+    conf = Config()
     if do_bootstrap:
         conf.boot_node = read_node_name()
     conf_ptr = conf.register()
-    with DevP2P(conf_ptr) as conn:
+    with Service(conf_ptr) as conn:
         conn.start()
         if do_connect:
             connect(conn)

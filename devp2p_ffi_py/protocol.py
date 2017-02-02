@@ -12,28 +12,14 @@ class SubProtocolError(ProtocolError):
 """
 original idea: one instance per peer, each instance peer is represented by greenlet
 rework:
-1) introduce connection class
+1) introduce Peer class
    create on connect
-   destroy on disconnect?
-2) introduce peer class
-   create on connect
-   mark disconnected on disconnect
+   destroy on disconnect
 
-ETH: peers are identical. We get blocks, re-transmit blocks. We get transaction messages, we re-transmit them.
-
-In Golem peers are not identical. Pair of peers may have contractual obligations.
-Do we need to be able to try to reconnect to a peer? Yes. Requestor might be on mobile network. Same goes for provider.
-Solution A: peer is an object, strong ref.
+In Golem peers are not identical. Pair of peers may have contractual obligations. Do we need to be able to try to reconnect to a peer? Yes. Requestor might be on mobile network. Same goes for provider.
+Solution A: peer is an object, strong ref. Peer is basically a connection. Leave the problem to lib user.
 On connect - create, set strong ref, set flag
 On disconnect: set flag, removing strong ref
-Solution B: peer is an object, weak+strong ref
-On connect, check if one exists.
-  If exists - set flag, set strong ref
-  If does not exists: create and set flag, set strong ref, set weak ref
-On disconnect: set flag, remove strong ref
-
-Swarm: peers are not identical. Only some of the peers have THE data.
-Check how swarm deals with this.
 
 """
 class BaseProtocol():

@@ -14,7 +14,7 @@ class AllowIP:
     PRIVATE = 2
     PUBLIC = 3
 
-class DevP2P():
+class Service():
     __protocols = []
     service = None
     config = None
@@ -39,12 +39,12 @@ class DevP2P():
 
     def __init__(self, config = None):
         if config == None:
-            self.config = DevP2P.config_local()
+            self.config = Service.config_local()
             return
         self.config = config
 
     def __enter__(self):
-        self.service = DevP2P.service(self.config)
+        self.service = Service.service(self.config)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -70,7 +70,7 @@ class DevP2P():
         raise NotImplemented()
 
     def add_subprotocol(self, protocol):
-        assert isinstance(protocol, BaseProtocol)
+        assert isinstance(protocol, ProtocolFFI)
         userdata = ffi.new_handle(protocol)
         self.__protocols.append(userdata) # don't let the GC collect this!
         protocol.service = self.service
@@ -91,8 +91,8 @@ class DevP2P():
         )
         mb_raise_errno(err, "Failed to register a subprotocol")
 
-"""Configuration for DevP2P Service"""
-class DevP2PConfig():
+"""Configuration for Service Service"""
+class Config():
     # Directory path to store general network configuration. None means nothing will be saved
     config_path = None # string
     # Directory path to store network-specific configuration. None means nothing will be saved
@@ -106,7 +106,7 @@ class DevP2PConfig():
     # Bootstrap node address; Parity's devp2p supports a list of boot_nodes; this FFI - not yet.
     boot_nodes = None # string
 
-    """Obtain a pointer to configuration to use in DevP2P.service call"""
+    """Obtain a pointer to configuration to use in Service.service call"""
     def register(self):
         def make_boot_nodes(lst):
             if lst:
