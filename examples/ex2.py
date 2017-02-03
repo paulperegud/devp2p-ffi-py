@@ -20,6 +20,7 @@ class Ex2(ProtocolFFI):
         pass
 
     def connected(self, io_ptr, peer_id):
+        super(Ex2, self).connected(io_ptr, peer_id)
         print "connected: {}".format(peer_id)
         vsn = self.peer_protocol_version(io_ptr, peer_id)
         print "protocol version: {}".format(vsn)

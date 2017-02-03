@@ -36,7 +36,8 @@ class PingPong(ProtocolFFI):
             time.sleep(0.01)
             self.reply(io_ptr, peer_id, packet_id+1, "z")
 
-    def connected(self, _, peer_id):
+    def connected(self, io_ptr, peer_id):
+        super(PingPong, self).connected(io_ptr, peer_id)
         print "connected"
         self.peer = peer_id
 

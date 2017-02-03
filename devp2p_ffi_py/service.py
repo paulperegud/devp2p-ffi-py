@@ -15,7 +15,8 @@ class AllowIP:
     PUBLIC = 3
 
 class Service():
-    __protocols = []
+    protocol_handles = {}
+    protocols = {}
     service = None
     config = None
 
@@ -72,9 +73,10 @@ class Service():
     def add_subprotocol(self, protocol):
         assert isinstance(protocol, ProtocolFFI)
         userdata = ffi.new_handle(protocol)
-        self.__protocols.append(userdata) # don't let the GC collect this!
+        self.protocols[protocol.protocol_id] = protocol
+        self.protocol_handles[protocol.protocol_id] = userdata # don't let the GC collect this!
         protocol.service = self.service
-        protocol_id = ffi.new("char[]", protocol.id)
+        protocol_id = ffi.new("char[]", protocol.protocol_id)
         buff = bytearray(protocol.versions)
         ffi_versions = ffi.from_buffer(buff)
         cbs = ffi.new("struct FFICallbacks*", (lib.initialize_cb,
@@ -91,7 +93,122 @@ class Service():
         )
         mb_raise_errno(err, "Failed to register a subprotocol")
 
-"""Configuration for Service Service"""
+    def register_peer(self, protocol, peer_id):
+        if self.peers.has_key(peer_id):
+            peer = self.peers[peer_id]
+            peer.add_protocol(protocol)
+        else:
+            peer = Peer(self, peer_id)
+            self.peers[peer_id] = peer
+            peer.add_protocol(protocol)
+
+    def deregister_peer(self, protocol, peer_id):
+        if self.peers.has_key(peer_id):
+            peer = self.peers[peer_id]
+            peer.rem_protocol(protocol)
+        else:
+            peer = Peer(self, peer_id)
+            self.peers[peer_id] = peer
+            peer.rem_protocol(protocol)
+        if len(peer.protocols) == 0:
+            del self.peers[peer_id]
+
+
+"""Thin wrapper around subprotocol FFI callbacks"""
+class ProtocolFFI():
+    """
+    Callbacks
+    :member protocol_id: Subprotocol ID, can be represented by 3 chars
+    :member name: Subprotocol name (not transmitted through the network)
+    :member versions: array of numbers in 0..255 range, 1 uint8_t each
+    :member max_packet_id: reserved space for commands
+    """
+    protocol_id = None
+    name = ""
+    versions = [1]
+    max_packet_id = 0
+
+    service = None
+    decoder_klass = None
+    lock = threading.Lock()
+
+    def __init__(self, decoder_klass):
+        self.protocol_id = decoder_klass.protocol_id
+        self.versions = [ decoder_klass.version ]
+        self.max_packet_id = decoder_klass.max_cmd_id
+        self.name = decoder_klass.name
+        ProtocolFFI.validate(self.protocol_id, self.versions, self.max_packet_id)
+
+    @classmethod
+    def validate(cls, protocol_id, versions, max_packet_id):
+        assert len(protocol_id) == 3
+        assert all([ v >= 0 and v <= 255 for v in versions ])
+        assert 1 <= max_packet_id and max_packet_id <= 255
+
+    def send_packet(self, peer_id, packet_id, data_bytearray):
+        assert packet_id <= self.max_packet_id
+        buff = ffi.from_buffer(data_bytearray)
+        size = ffi.sizeof(buff)
+        protocol_id = ffi.new("char[]", self.protocol_id)
+        lib.protocol_send(self.service, protocol_id, peer_id, packet_id, buff, size)
+
+    def reply(self, context, peer_id, packet_id, data_bytearray):
+        assert packet_id <= self.max_packet_id
+        buff = ffi.from_buffer(data_bytearray)
+        size = ffi.sizeof(buff)
+        lib.protocol_reply(context, peer_id, packet_id, buff, size)
+
+    def peer_protocol_version(self, context, peer_id):
+        errno = ffi.new("unsigned char *")
+        res = lib.peer_protocol_version(context, peer_id, errno)
+        if errno[0] != 0:
+            raise_errno(errno[0], "Peer unknown or using wrong subprotocol")
+        return res
+
+    # callbacks are below
+    def initialize(self, io_ptr):
+        pass
+
+    def connected(self, io_ptr, peer_id):
+        protocolffi = self
+        peer = self.service.register_peer(protocolffi, peer_id)
+        decoder = self.decoder_klass(peer, self)
+        self.peers[peer_id] = decoder
+
+    def read(self, io_ptr, peer_id, packet_id, data):
+        pass
+
+    def disconnected(self, io_ptr, peer_id):
+        protocol = self
+        self.service.deregister_peer(protocol, peer_id)
+
+# block of functions below route functional C-style callbacks to protocol objects
+@ffi.def_extern()
+def initialize_cb(userdata, io_ptr):
+    protocol = ffi.from_handle(userdata)
+    protocol.initialize(io_ptr)
+    return
+
+@ffi.def_extern()
+def connected_cb(userdata, io_ptr, peer_id):
+    protocol = ffi.from_handle(userdata)
+    protocol.connected(io_ptr, peer_id)
+    return
+
+@ffi.def_extern()
+def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
+    data = ffi.unpack(data_ptr, length)
+    protocol = ffi.from_handle(userdata)
+    protocol.read(io_ptr, peer_id, packet_id, data)
+    return
+
+@ffi.def_extern()
+def disconnected_cb(userdata, io_ptr, peer_id):
+    protocol = ffi.from_handle(userdata)
+    protocol.disconnected(io_ptr, peer_id)
+    return
+
+"""Configuration for DevP2P Service"""
 class Config():
     # Directory path to store general network configuration. None means nothing will be saved
     config_path = None # string
@@ -164,88 +281,3 @@ def mk_str_len(string):
     # non_reserved_mode = NonReservedPeerMode.ACCEPT
     # # IP filter
     # allow_ips = AllowIP.ALL
-
-"""Thin wrapper around subprotocol FFI callbacks"""
-class ProtocolFFI():
-    """
-    Callbacks
-    :member id: Subprotocol ID, can be represented by 3 chars
-    :member name: Subprotocol name (not transmitted through the network)
-    :member versions: array of numbers in 0..255 range, 1 uint8_t each
-    :member max_packet_id: reserved space for commands
-    """
-    id = None
-    name = ""
-    versions = [1]
-    max_packet_id = 0
-
-    service = None
-    lock = threading.Lock()
-
-    def __init__(self, protocol_id, versions, max_packet_id, name = ""):
-        assert len(protocol_id) == 3
-        assert all([ v >= 0 and v <= 255 for v in versions ])
-        self.versions = versions
-        assert 1 <= max_packet_id and max_packet_id <= 255
-        self.id = protocol_id
-        self.max_packet_id = max_packet_id
-        self.name = name
-
-    def send(self, peer_id, packet_id, data_bytearray):
-        assert packet_id <= self.max_packet_id
-        buff = ffi.from_buffer(data_bytearray)
-        size = ffi.sizeof(buff)
-        protocol_id = ffi.new("char[]", self.id)
-        lib.protocol_send(self.service, protocol_id, peer_id, packet_id, buff, size)
-
-    def reply(self, context, peer_id, packet_id, data_bytearray):
-        assert packet_id <= self.max_packet_id
-        buff = ffi.from_buffer(data_bytearray)
-        size = ffi.sizeof(buff)
-        lib.protocol_reply(context, peer_id, packet_id, buff, size)
-
-    def peer_protocol_version(self, context, peer_id):
-        errno = ffi.new("unsigned char *")
-        res = lib.peer_protocol_version(context, peer_id, errno)
-        if errno[0] != 0:
-            raise_errno(errno[0], "Peer unknown or using wrong subprotocol")
-        return res
-
-    # callbacks are below
-    def initialize(self, io_ptr):
-        pass
-
-    def connected(self, io_ptr, peer_id):
-        pass
-
-    def read(self, io_ptr, peer_id, packet_id, data):
-        pass
-
-    def disconnected(self, io_ptr, peer_id):
-        pass
-
-# block of functions below route functional C-style callbacks to protocol objects
-@ffi.def_extern()
-def initialize_cb(userdata, io_ptr):
-    protocol = ffi.from_handle(userdata)
-    protocol.initialize(io_ptr)
-    return
-
-@ffi.def_extern()
-def connected_cb(userdata, io_ptr, peer_id):
-    protocol = ffi.from_handle(userdata)
-    protocol.connected(io_ptr, peer_id)
-    return
-
-@ffi.def_extern()
-def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
-    data = ffi.unpack(data_ptr, length)
-    protocol = ffi.from_handle(userdata)
-    protocol.read(io_ptr, peer_id, packet_id, data)
-    return
-
-@ffi.def_extern()
-def disconnected_cb(userdata, io_ptr, peer_id):
-    protocol = ffi.from_handle(userdata)
-    protocol.disconnected(io_ptr, peer_id)
-    return

@@ -1,3 +1,4 @@
+from service import Service
 import rlp
 from rlp import sedes
 
@@ -42,10 +43,12 @@ class BaseProtocol():
     which can be registered in a list which is available as:
     protocol.receive_X_callbacks
     """
-    protocol_id = 0
+    protocol_id = "tst"
     name = ''
     version = 0
-    max_cmd_id = 0  # reserved cmd space
+    max_cmd_id = 1  # reserved cmd space
+
+    protocolffi = None
 
     class command(object):
 
@@ -115,13 +118,12 @@ class BaseProtocol():
 
         # end command base ###################################################
 
-    def __init__(self, peer, service):
-        "hint: implement peer_started notifcation of associated protocol here"
-        assert isinstance(service, WiredService)
-        assert callable(peer.send_packet)
-        self.is_stopped = False
+    def __init__(self, peer, protocolffi):
+        "hint: implement peer_started notification of associated protocol here"
+        assert isinstance(protocolffi, ProtocolFFI)
+        assert callable(protocolffi.send_packet)
         self.peer = peer
-        self.service = service
+        self.protocolffi = protocolffi
         self._setup()
 
     def __repr__(self):
@@ -139,7 +141,6 @@ class BaseProtocol():
 
             def receive(packet):
                 "decode rlp, create dict, call receive"
-                assert isinstance(packet, Packet)
                 instance.receive(proto=self, data=klass.decode_payload(packet.payload))
 
             def create(*args, **kargs):
@@ -174,16 +175,32 @@ class BaseProtocol():
             self.stop()
 
     def send_packet(self, packet):
-        self.peer.send_packet(packet)
+        self.protocolffi.send_packet(self.peer_id, packet.cmd_id, packet.payload)
 
-    def start(self):
-        log.debug('starting', proto=self)
-        self.service.on_wire_protocol_start(self)
+class Packet(object):
 
-    def _run(self):
-        pass
+    """
+    Packets are emitted and received by subprotocols
+    """
 
-    def stop(self):
-        log.debug('stopping', proto=self)
-        self.is_stopped = True
-        self.service.on_wire_protocol_stop(self)
+    def __init__(self, protocol_id=0, cmd_id=0, payload='', prioritize=False):
+        self.protocol_id = protocol_id
+        self.cmd_id = cmd_id
+        self.payload = payload
+        self.prioritize = prioritize
+
+    def __repr__(self):
+        return 'Packet(%r)' % dict(protocol_id=self.protocol_id,
+                                   cmd_id=self.cmd_id,
+                                   payload_len=len(self.payload),
+                                   prioritize=self.prioritize)
+
+    def __eq__(self, other):
+        s = dict(self.__dict__)
+        s.pop('prioritize')
+        o = dict(other.__dict__)
+        o.pop('prioritize')
+        return s == o
+
+    def __len__(self):
+        return len(self.payload)

@@ -1,4 +1,5 @@
 docopt
 cffi==1.9
 pytest==2.9.0
+rlp
 
