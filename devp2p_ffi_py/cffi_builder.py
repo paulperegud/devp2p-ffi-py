@@ -84,7 +84,8 @@ def absolute(*paths):
 
 if __name__ == "__main__":
     print "building bindings..."
-    _build_bindings()
+    builder = _get_ffi()
+    builder.compile()
     print "building bindings... done!"
     exit(0)
 
