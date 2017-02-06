@@ -1,4 +1,5 @@
-from service import Service
+from devp2p_ffi_py.service import ProtocolFFI
+# from devp2p_ffi_py.service import Abcdefg
 import rlp
 from rlp import sedes
 
@@ -23,7 +24,7 @@ On connect - create, set strong ref, set flag
 On disconnect: set flag, removing strong ref
 
 """
-class BaseProtocol():
+class BaseProtocol(object):
 
     """
     A protocol mediates between the network and the service.
@@ -43,12 +44,13 @@ class BaseProtocol():
     which can be registered in a list which is available as:
     protocol.receive_X_callbacks
     """
-    protocol_id = "tst"
-    name = ''
+    protocol_id = "myp"
+    name = 'My Protocol'
     version = 0
     max_cmd_id = 1  # reserved cmd space
 
     protocolffi = None
+    peer_id = None
 
     class command(object):
 
@@ -119,10 +121,10 @@ class BaseProtocol():
         # end command base ###################################################
 
     def __init__(self, peer, protocolffi):
-        "hint: implement peer_started notification of associated protocol here"
         assert isinstance(protocolffi, ProtocolFFI)
         assert callable(protocolffi.send_packet)
         self.peer = peer
+        self.peer_id = peer.peer_id
         self.protocolffi = protocolffi
         self._setup()
 
@@ -175,6 +177,9 @@ class BaseProtocol():
             self.stop()
 
     def send_packet(self, packet):
+        import cffi_devp2p
+        print "path to lib: {}".format(cffi_devp2p.__file__)
+        print "sending packet. peer_id: {}, cmd_id: {}, payload: {}".format(self.peer_id, packet.cmd_id, packet.payload)
         self.protocolffi.send_packet(self.peer_id, packet.cmd_id, packet.payload)
 
 class Packet(object):

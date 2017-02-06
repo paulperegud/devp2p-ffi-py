@@ -13,44 +13,46 @@ Options:
 from docopt import docopt
 
 from devp2p_ffi_py.service import *
+from devp2p_ffi_py.protocol import *
 import time
 import threading
 
-class PingPong(ProtocolFFI):
-    protocol_id = 1
-    network_id = 0
-    max_cmd_id = 1
-    name = "example"
+class PingPong(BaseProtocol):
+    protocol_id = "png"
+    max_cmd_id = 2
+    name = "Ping pong with TTL"
     version = 1
-    peer = None
+
     rx = [0,0,0,0,0,0]
+    lock = threading.Lock
 
-    def __init__(self):
-        ProtocolFFI.__init__(self, "png", [1], 10)
-
-    def read(self, io_ptr, peer_id, packet_id, data):
-        with self.lock:
-            self.rx[packet_id-1] += 1
-            more = packet_id < len(self.rx)
-        if more:
-            time.sleep(0.01)
-            self.reply(io_ptr, peer_id, packet_id+1, "z")
-
-    def connected(self, io_ptr, peer_id):
-        super(PingPong, self).connected(io_ptr, peer_id)
+    def __init__(self, peer, protocolffi):
+        super(PingPong, self).__init__(peer, protocolffi)
         print "connected"
-        self.peer = peer_id
+        ttl = len(self.rx)
+        print "ttl: {}".format(ttl)
+        res = self.send_ping(ttl)
+        print "res: {}".format(res)
+        res
 
-    # class token(ProtocolFFI.command):
+    class ping(BaseProtocol.command):
+        cmd_id = 1
+        structure = [
+            ('ttl', sedes.big_endian_int)
+        ]
 
-    #     """
-    #     message sending a token and a nonce
-    #     """
-    #     cmd_id = 0
+        def create(self, proto, ttl):
+            print "create"
+            return dict(ttl=ttl)
 
-    #     structure = [
-    #         ('token', Token)
-    #     ]
+        def receive(self, proto, data):
+            print "received data: {}".format(data)
+            with proto.lock:
+                proto.rx[data.ttl] += 1
+                more = data.ttl > 0
+            if more:
+                time.sleep(0.01)
+                proto.send_ping(data.ttl-1)
 
 def main(do_connect, do_bootstrap):
     conf = Config()
@@ -65,25 +67,25 @@ def main(do_connect, do_bootstrap):
             listen(conn)
 
 def connect(conn):
-    bp = PingPong()
-    N = 200
+    bp = ProtocolFFI(PingPong)
+    # N = 200
     conn.add_subprotocol(bp)
     server = read_node_name()
     conn.add_reserved_peer(server)
-    time.sleep(3)
-    if bp.peer is not None:
-        for i in xrange(N):
-            time.sleep(0.01)
-            bp.send(bp.peer, 1, "z")
-    time.sleep(5)
-    with bp.lock:
-        print bp.rx
-        print sorted(set(bp.rx))
-        res = [0, N] == sorted(set(bp.rx))
-        assert res, "losing packets (https://github.com/ethcore/parity/issues/4107 ?)"
+    time.sleep(9)
+    # if bp.peer is not None:
+    #     for i in xrange(N):
+    #         time.sleep(0.01)
+    #         bp.send(bp.peer, 1, "z")
+    # time.sleep(5)
+    # with bp.lock:
+    #     print bp.rx
+    #     print sorted(set(bp.rx))
+    #     res = [0, N] == sorted(set(bp.rx))
+    #     assert res, "losing packets (https://github.com/ethcore/parity/issues/4107 ?)"
 
 def listen(conn):
-    bp = PingPong()
+    bp = ProtocolFFI(PingPong)
     conn.add_subprotocol(bp)
     my_node_name = conn.node_name()
     write_node_name(my_node_name)

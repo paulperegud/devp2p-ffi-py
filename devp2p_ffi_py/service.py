@@ -3,6 +3,8 @@ from errors import *
 import threading
 import weakref
 
+from devp2p_ffi_py.peer import Peer
+
 ffi_weakkeydict = weakref.WeakKeyDictionary()
 
 class NonReservedPeerMode:
@@ -17,8 +19,10 @@ class AllowIP:
 class Service():
     protocol_handles = {}
     protocols = {}
-    service = None
+    ns = None # FFI NetworkService
     config = None
+
+    peers = {} # currently connected peers
 
     @staticmethod
     def config_local():
@@ -33,10 +37,10 @@ class Service():
     @staticmethod
     def service(config):
         errno = ffi.new("unsigned char *")
-        service = lib.network_service(config, errno)
+        ns = lib.network_service(config, errno)
         if errno[0] != 0:
             raise DevP2PException("Can't initialize devp2p service instance")
-        return service
+        return ns
 
     def __init__(self, config = None):
         if config == None:
@@ -45,26 +49,26 @@ class Service():
         self.config = config
 
     def __enter__(self):
-        self.service = Service.service(self.config)
+        self.ns = Service.service(self.config)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        lib.network_service_free(self.service)
-        self.service = None
+        lib.network_service_free(self.ns)
+        self.ns = None
 
     def start(self):
-        res = lib.network_service_start(self.service)
+        res = lib.network_service_start(self.ns)
         if res != 0:
             raise_errno(res, "Can't start service. Port in use?")
 
     def node_name(self):
-        ptr = lib.network_service_node_name(self.service)
+        ptr = lib.network_service_node_name(self.ns)
         if ffi.NULL == ptr:
             return None
         return ffi.string(ptr)
 
     def add_reserved_peer(self, node_name):
-        mb_raise_errno(lib.network_service_add_reserved_peer(self.service, node_name))
+        mb_raise_errno(lib.network_service_add_reserved_peer(self.ns, node_name))
 
     def disconnect_peer(self, peer_id, ban = False):
         """NetworkContext.{disable|disconnect}_peer"""
@@ -75,7 +79,7 @@ class Service():
         userdata = ffi.new_handle(protocol)
         self.protocols[protocol.protocol_id] = protocol
         self.protocol_handles[protocol.protocol_id] = userdata # don't let the GC collect this!
-        protocol.service = self.service
+        protocol.service = self
         protocol_id = ffi.new("char[]", protocol.protocol_id)
         buff = bytearray(protocol.versions)
         ffi_versions = ffi.from_buffer(buff)
@@ -83,7 +87,7 @@ class Service():
                                                lib.connected_cb,
                                                lib.read_cb,
                                                lib.disconnected_cb))
-        err = lib.network_service_add_protocol(self.service,
+        err = lib.network_service_add_protocol(self.ns,
                                                userdata,
                                                protocol_id,
                                                protocol.max_packet_id,
@@ -101,6 +105,7 @@ class Service():
             peer = Peer(self, peer_id)
             self.peers[peer_id] = peer
             peer.add_protocol(protocol)
+        return peer
 
     def deregister_peer(self, protocol, peer_id):
         if self.peers.has_key(peer_id):
@@ -113,6 +118,8 @@ class Service():
         if len(peer.protocols) == 0:
             del self.peers[peer_id]
 
+class Abcdefg():
+    pass
 
 """Thin wrapper around subprotocol FFI callbacks"""
 class ProtocolFFI():
@@ -130,9 +137,11 @@ class ProtocolFFI():
 
     service = None
     decoder_klass = None
+    peers = {} # peer_id -> instance of decoder_klass
     lock = threading.Lock()
 
     def __init__(self, decoder_klass):
+        self.decoder_klass = decoder_klass
         self.protocol_id = decoder_klass.protocol_id
         self.versions = [ decoder_klass.version ]
         self.max_packet_id = decoder_klass.max_cmd_id
@@ -150,7 +159,7 @@ class ProtocolFFI():
         buff = ffi.from_buffer(data_bytearray)
         size = ffi.sizeof(buff)
         protocol_id = ffi.new("char[]", self.protocol_id)
-        lib.protocol_send(self.service, protocol_id, peer_id, packet_id, buff, size)
+        lib.protocol_send(self.service.ns, protocol_id, peer_id, packet_id, buff, size)
 
     def reply(self, context, peer_id, packet_id, data_bytearray):
         assert packet_id <= self.max_packet_id
