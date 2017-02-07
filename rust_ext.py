@@ -100,7 +100,8 @@ class RustBuildCommand(Command):
         # Ask build_ext where the shared library would go if it had built it,
         # then copy it there.
         build_ext = self.get_finalized_command('build_ext')
-        target_fname = os.path.splitext(os.path.basename(dylib_path)[3:])[0]
+        # target_fname = os.path.splitext(os.path.basename(dylib_path)[3:])[0]
+        target_fname = os.path.splitext(os.path.basename(dylib_path))[0]
         ext_path = build_ext.get_ext_fullpath(os.path.basename(target_fname))
         try:
             os.makedirs(os.path.dirname(ext_path))
@@ -148,8 +149,9 @@ class install_lib_including_rust(install_lib):
     Typically you want to use this so that the usual 'setup.py install'
     just works.
     """
-
     def build(self):
         install_lib.build(self)
         if not self.skip_build:
             self.run_command('build_rust')
+
+

@@ -8,6 +8,7 @@ def get_ffi(**kwargs):
     kwargs['libraries'] = ["devp2p_ffi"]
     kwargs['include_dirs'] = [absolute("../devp2p-ffi/include/")]
     kwargs['library_dirs'] = [absolute("../devp2p-ffi/target/release/")]
+    kwargs['extra_link_args'] = ['-Wl,-rpath=$ORIGIN']
     print "kwargs: {}".format(kwargs)
     ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>' , **kwargs)
     ffibuilder.cdef("""

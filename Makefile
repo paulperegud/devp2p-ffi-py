@@ -19,9 +19,7 @@ libdevp2p_ffi.so: ../devp2p-ffi/src/lib.rs ../devp2p-ffi/include/libdevp2p_ffi.h
 
 
 clean:
-	rm -f *.c *.a *.so *.h *.o
-	sudo rm /usr/include/libdevp2p_ffi.h
-	sudo rm /usr/lib/libdevp2p_ffi.so
+	rm -rf *egg-info .eggs dist build
 
 # TODO for later:
 # automate building system using CI (via github)
