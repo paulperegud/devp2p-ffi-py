@@ -208,7 +208,7 @@ def connected_cb(userdata, io_ptr, peer_id):
 @ffi.def_extern()
 def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
     print("python: got data")
-    data = ffi.unpack(data_ptr, length)
+    data = ffi.buffer(data_ptr, length)
     protocol = ffi.from_handle(userdata)
     protocol.read(io_ptr, peer_id, packet_id, data)
     return
