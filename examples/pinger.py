@@ -24,16 +24,12 @@ class PingPong(BaseProtocol):
     version = 1
 
     rx = [0,0,0,0,0,0]
-    lock = threading.Lock
+    lock = threading.Lock()
 
     def __init__(self, peer, protocolffi):
         super(PingPong, self).__init__(peer, protocolffi)
-        print "connected"
         ttl = len(self.rx)
-        print "ttl: {}".format(ttl)
-        res = self.send_ping(ttl)
-        print "res: {}".format(res)
-        res
+        self.send_ping(ttl)
 
     class ping(BaseProtocol.command):
         cmd_id = 1
@@ -42,17 +38,20 @@ class PingPong(BaseProtocol):
         ]
 
         def create(self, proto, ttl):
-            print "create"
             return dict(ttl=ttl)
 
         def receive(self, proto, data):
-            print "received data: {}".format(data)
+            ttl = data['ttl']
             with proto.lock:
-                proto.rx[data.ttl] += 1
-                more = data.ttl > 0
+                proto.rx[ttl-1] += 1
+                print("{}->{}".format(ttl, proto.rx[ttl-1]))
+            more = ttl-1 > 0
             if more:
                 time.sleep(0.01)
-                proto.send_ping(data.ttl-1)
+                proto.send_ping(ttl-1)
+            else:
+                with proto.lock:
+                    print proto.rx
 
 def main(do_connect, do_bootstrap):
     conf = Config()
@@ -68,21 +67,10 @@ def main(do_connect, do_bootstrap):
 
 def connect(conn):
     bp = ProtocolFFI(PingPong)
-    # N = 200
     conn.add_subprotocol(bp)
     server = read_node_name()
     conn.add_reserved_peer(server)
     time.sleep(9)
-    # if bp.peer is not None:
-    #     for i in xrange(N):
-    #         time.sleep(0.01)
-    #         bp.send(bp.peer, 1, "z")
-    # time.sleep(5)
-    # with bp.lock:
-    #     print bp.rx
-    #     print sorted(set(bp.rx))
-    #     res = [0, N] == sorted(set(bp.rx))
-    #     assert res, "losing packets (https://github.com/ethcore/parity/issues/4107 ?)"
 
 def listen(conn):
     bp = ProtocolFFI(PingPong)

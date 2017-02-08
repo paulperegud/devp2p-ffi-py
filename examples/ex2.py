@@ -13,7 +13,6 @@ from docopt import docopt
 
 from devp2p_ffi_py.service import *
 import time
-import threading
 
 class Ex2(ProtocolFFI):
     def read(self, io_ptr, peer_id, packet_id, data):

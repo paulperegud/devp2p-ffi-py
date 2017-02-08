@@ -136,7 +136,6 @@ class ProtocolFFI(object):
     service = None
     decoder_klass = None
     peers = {} # peer_id -> instance of decoder_klass
-    lock = threading.Lock()
 
     def __init__(self, decoder_klass):
         self.decoder_klass = decoder_klass
@@ -200,14 +199,12 @@ def initialize_cb(userdata, io_ptr):
 
 @ffi.def_extern()
 def connected_cb(userdata, io_ptr, peer_id):
-    print("python: connected")
     protocol = ffi.from_handle(userdata)
     protocol.connected(io_ptr, peer_id)
     return
 
 @ffi.def_extern()
 def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
-    print("python: got data")
     data = ffi.buffer(data_ptr, length)
     protocol = ffi.from_handle(userdata)
     protocol.read(io_ptr, peer_id, packet_id, data)
@@ -215,7 +212,6 @@ def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
 
 @ffi.def_extern()
 def disconnected_cb(userdata, io_ptr, peer_id):
-    print("python: disconnected")
     protocol = ffi.from_handle(userdata)
     protocol.disconnected(io_ptr, peer_id)
     return

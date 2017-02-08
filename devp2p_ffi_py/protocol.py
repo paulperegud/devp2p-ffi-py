@@ -1,10 +1,8 @@
 import rlp
 from rlp import sedes
 
-
 class ProtocolError(Exception):
     pass
-
 
 class SubProtocolError(ProtocolError):
     pass
@@ -175,8 +173,6 @@ class BaseProtocol(object):
 
     def send_packet(self, packet):
         import cffi_devp2p
-        print "path to lib: {}".format(cffi_devp2p.__file__)
-        print "sending packet. peer_id: {}, cmd_id: {}, payload: {}".format(self.peer_id, packet.cmd_id, packet.payload)
         self.protocolffi.send_packet(self.peer_id, packet.cmd_id, packet.payload)
 
 class Packet(object):

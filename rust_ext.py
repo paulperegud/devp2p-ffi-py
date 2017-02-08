@@ -107,6 +107,7 @@ class RustBuildCommand(Command):
             os.makedirs(os.path.dirname(ext_path))
         except OSError:
             pass
+        print("dylib_path:{} -> ext_path: {}".format(dylib_path, ext_path))
         shutil.copyfile(dylib_path, ext_path)
 
 
@@ -150,8 +151,14 @@ class install_lib_including_rust(install_lib):
     just works.
     """
     def build(self):
+        print("build 1")
         install_lib.build(self)
+        print("build 2")
         if not self.skip_build:
+            print("build 3")
             self.run_command('build_rust')
+            print("build 4")
+        print("build 5")
+
 
 
