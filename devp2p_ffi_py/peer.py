@@ -1,7 +1,6 @@
 import time
 import operator
 from collections import OrderedDict
-# from protocol import BaseProtocol
 
 class UnknownCommandError(Exception):
 

@@ -1,5 +1,3 @@
-from devp2p_ffi_py.service import ProtocolFFI
-# from devp2p_ffi_py.service import Abcdefg
 import rlp
 from rlp import sedes
 
@@ -121,7 +119,6 @@ class BaseProtocol(object):
         # end command base ###################################################
 
     def __init__(self, peer, protocolffi):
-        assert isinstance(protocolffi, ProtocolFFI)
         assert callable(protocolffi.send_packet)
         self.peer = peer
         self.peer_id = peer.peer_id

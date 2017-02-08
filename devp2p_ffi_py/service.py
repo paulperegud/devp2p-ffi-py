@@ -8,16 +8,16 @@ from devp2p_ffi_py.protocol import Packet
 
 ffi_weakkeydict = weakref.WeakKeyDictionary()
 
-class NonReservedPeerMode:
+class NonReservedPeerMode(object):
     ACCEPT = 1
     DENY = 2
 
-class AllowIP:
+class AllowIP(object):
     ALL = 1
     PRIVATE = 2
     PUBLIC = 3
 
-class Service():
+class Service(object):
     protocol_handles = {}
     protocols = {}
     ns = None # FFI NetworkService
@@ -119,11 +119,8 @@ class Service():
         if len(peer.protocols) == 0:
             del self.peers[peer_id]
 
-class Abcdefg():
-    pass
-
 """Thin wrapper around subprotocol FFI callbacks"""
-class ProtocolFFI():
+class ProtocolFFI(object):
     """
     Callbacks
     :member protocol_id: Subprotocol ID, can be represented by 3 chars
@@ -186,7 +183,7 @@ class ProtocolFFI():
         self.peers[peer_id] = decoder
 
     def read(self, io_ptr, peer_id, packet_id, data):
-        decoder = self.peers[peer_id] 
+        decoder = self.peers[peer_id]
         packet = Packet(protocol_id = decoder.protocol_id, cmd_id = packet_id, payload = data)
         decoder.receive_packet(packet)
 
@@ -224,7 +221,7 @@ def disconnected_cb(userdata, io_ptr, peer_id):
     return
 
 """Configuration for DevP2P Service"""
-class Config():
+class Config(object):
     # Directory path to store general network configuration. None means nothing will be saved
     config_path = None # string
     # Directory path to store network-specific configuration. None means nothing will be saved
