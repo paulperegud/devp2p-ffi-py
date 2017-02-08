@@ -4,6 +4,7 @@ import threading
 import weakref
 
 from devp2p_ffi_py.peer import Peer
+from devp2p_ffi_py.protocol import Packet
 
 ffi_weakkeydict = weakref.WeakKeyDictionary()
 
@@ -185,7 +186,9 @@ class ProtocolFFI():
         self.peers[peer_id] = decoder
 
     def read(self, io_ptr, peer_id, packet_id, data):
-        pass
+        decoder = self.peers[peer_id] 
+        packet = Packet(protocol_id = decoder.protocol_id, cmd_id = packet_id, payload = data)
+        decoder.receive_packet(packet)
 
     def disconnected(self, io_ptr, peer_id):
         protocol = self
@@ -200,12 +203,14 @@ def initialize_cb(userdata, io_ptr):
 
 @ffi.def_extern()
 def connected_cb(userdata, io_ptr, peer_id):
+    print("python: connected")
     protocol = ffi.from_handle(userdata)
     protocol.connected(io_ptr, peer_id)
     return
 
 @ffi.def_extern()
 def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
+    print("python: got data")
     data = ffi.unpack(data_ptr, length)
     protocol = ffi.from_handle(userdata)
     protocol.read(io_ptr, peer_id, packet_id, data)
@@ -213,6 +218,7 @@ def read_cb(userdata, io_ptr, peer_id, packet_id, data_ptr, length):
 
 @ffi.def_extern()
 def disconnected_cb(userdata, io_ptr, peer_id):
+    print("python: disconnected")
     protocol = ffi.from_handle(userdata)
     protocol.disconnected(io_ptr, peer_id)
     return
