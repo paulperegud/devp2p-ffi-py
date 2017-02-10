@@ -179,6 +179,12 @@ class ProtocolFFI(object):
         protocolffi = self
         peer = self.service.register_peer(protocolffi, peer_id)
         decoder = self.decoder_klass(peer, self)
+        decoder.peer_protocol_version = self.peer_protocol_version(io_ptr, peer_id)
+        decoder.enode = self.peer_protocol_version(io_ptr, peer_id)
+        errno = ffi.new("unsigned char *")
+        sessobj = lib.peer_session_info(io_ptr, peer_id, errno)
+        decoder.session_info = SessionInfo(sessobj)
+        lib.peer_session_info_free(sessobj)
         self.peers[peer_id] = decoder
 
     def read(self, io_ptr, peer_id, packet_id, data):
@@ -189,6 +195,10 @@ class ProtocolFFI(object):
     def disconnected(self, io_ptr, peer_id):
         protocol = self
         self.service.deregister_peer(protocol, peer_id)
+
+def get_peer_info(io_ptr, peer_id):
+    sobj = lib.peer_session_info(io_ptr, peer_id)
+
 
 # block of functions below route functional C-style callbacks to protocol objects
 @ffi.def_extern()
@@ -259,6 +269,22 @@ class Config(object):
         mb_raise_errno(errno[0], "Bad arg while processing configuration")
         return res
 
+class SessionInfo(object):
+    id = None # Peer public key
+    client_version = None # Peer client ID
+    protocol_version = None # Peer RLPx protocol version
+    capabilities = None # Session protocol capabilities
+    peer_capabilities = None # Peer protocol capabilities
+    ping_ms = None # Peer ping delay in milliseconds
+    originated = None # True if this session was originated by us
+    remote_addres = None # Remote endpoint address of the session
+    local_address = None # Local endpoint address of the session
+
+    def __init__(self, obj):
+        # self.id =
+        self.client_version = unpack_str_len(obj.client_version)
+
+
 def mk_str_len(string):
     if string is None:
         buff = ffi.NULL
@@ -268,6 +294,18 @@ def mk_str_len(string):
     res = ffi.new("struct StrLen*", (size, buff))
     ffi_weakkeydict[res] = (size, buff)
     return res
+
+def unpack_str_len(strlen):
+    return ffi.buffer(strlen.buff, strlen.len)
+
+def repack(s):
+    sn = mk_str_len(S)
+    sn1 = lib.repack_str_len(sl)
+    S1 = unpack_str_len(sn1)
+    return S1
+
+def add_two(x):
+    return lib.add_two(x)
 
     # # Enable NAT configuration
     # nat_enabled = True

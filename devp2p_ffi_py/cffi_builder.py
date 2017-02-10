@@ -33,6 +33,13 @@ def get_ffi(**kwargs):
         struct StrLen** nodes;
     };
 
+    //struct SessionInfo {
+    //    char* id;
+    //    struct StrLen* client_version;
+    //    struct StrLen* remote_address;
+    //    struct StrLen* local_address;
+    //};
+
     struct Configuration {
         struct StrLen* config_path;
         struct StrLen* net_config_path;
@@ -64,6 +71,7 @@ def get_ffi(**kwargs):
                                          size_t versions_len,
                                          struct FFICallbacks* cbs
                                         );
+    uint8_t add_two(uint8_t x);
 
     uint8_t peer_protocol_version(void* io,
                                   char* protocol_id,
@@ -72,8 +80,14 @@ def get_ffi(**kwargs):
                        size_t peer, uint8_t packet, char* buffer, size_t size);
     uint8_t protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
 
+    // void* peer_session_info(void* io_ptr, size_t peer_id, uint8_t* errno);
+    // void peer_session_info_free(void* ptr);
     uint8_t network_service_add_reserved_peer(void*, char*);
+
     char* network_service_node_name(void*);
+
+
+    // void* repack_str_len(struct StrLen* ptr);
 
     """)
     return ffibuilder

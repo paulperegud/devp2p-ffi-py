@@ -47,6 +47,7 @@ class BaseProtocol(object):
 
     protocolffi = None
     peer_id = None
+    peer_protocol_version = None
 
     class command(object):
 

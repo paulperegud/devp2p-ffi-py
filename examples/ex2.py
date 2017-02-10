@@ -14,7 +14,24 @@ from docopt import docopt
 from devp2p_ffi_py.service import *
 import time
 
-class Ex2(ProtocolFFI):
+class Greeter(BaseProtocol):
+    protocol_id = "grt"
+    max_cmd_id = 2
+    name = "Greeter"
+    version = 1
+
+    def __init__(self, peer, protocolffi):
+        super(Greeter, self).__init__(peer, protocolffi)
+        self.send_hello()
+
+    class hello(BaseProtocol.command):
+        cmd_id = 1
+
+        def receive(self, proto, data):
+            peer_id = proto.peer_id
+            vsn = proto.peer_protocol_version
+            print "Received hello from node {} (peer_id {})".format(peer_id)
+
     def read(self, io_ptr, peer_id, packet_id, data):
         pass
 

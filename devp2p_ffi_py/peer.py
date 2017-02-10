@@ -17,6 +17,7 @@ class Peer(object):
     remote_client_version = ''
     protocols = {}
     peer_id = None
+    _session_info = None # SessionInfo
 
     def __init__(self, peermanager, peer_id, remote_pubkey=None):
         self.protocols = OrderedDict()
@@ -46,6 +47,7 @@ class Peer(object):
         del self.protocols[protocol.protocol_id]
 
     def session_info(self):
+        return self._session_info
         """Node ID and other data is in session.rs / SessionInfo"""
         raise NotImplemented()
 
@@ -88,4 +90,3 @@ class Peer(object):
     # receiving p2p messages (from protocols)
     def receive(packet, packet_id, protocol_id):
         raise NotImplemented()
-
