@@ -44,7 +44,6 @@ class PingPong(BaseProtocol):
             ttl = data['ttl']
             with proto.lock:
                 proto.rx[ttl-1] += 1
-                print("{}->{}".format(ttl, proto.rx[ttl-1]))
             more = ttl-1 > 0
             if more:
                 time.sleep(0.01)

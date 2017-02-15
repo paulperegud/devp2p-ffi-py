@@ -164,9 +164,11 @@ class ProtocolFFI(object):
         size = ffi.sizeof(buff)
         lib.protocol_reply(context, peer_id, packet_id, buff, size)
 
-    def peer_protocol_version(self, context, peer_id):
+    def peer_protocol_version(self, io_ptr, peer_id):
+        print "access service.peer_protocol_version"
         errno = ffi.new("unsigned char *")
-        res = lib.peer_protocol_version(context, peer_id, errno)
+        protocol_id = ffi.new("char[]", self.protocol_id)
+        res = lib.peer_protocol_version(io_ptr, protocol_id, peer_id, errno)
         if errno[0] != 0:
             raise_errno(errno[0], "Peer unknown or using wrong subprotocol")
         return res
@@ -176,16 +178,19 @@ class ProtocolFFI(object):
         pass
 
     def connected(self, io_ptr, peer_id):
+        print("connected: {}".format(peer_id))
         protocolffi = self
         peer = self.service.register_peer(protocolffi, peer_id)
         decoder = self.decoder_klass(peer, self)
         decoder.peer_protocol_version = self.peer_protocol_version(io_ptr, peer_id)
-        decoder.enode = self.peer_protocol_version(io_ptr, peer_id)
         errno = ffi.new("unsigned char *")
+        print("call to lib.peer_session_info")
         sessobj = lib.peer_session_info(io_ptr, peer_id, errno)
+        print("reading SessionInfo fields")
         decoder.session_info = SessionInfo(sessobj)
         lib.peer_session_info_free(sessobj)
         self.peers[peer_id] = decoder
+        print("has_key {} -> {}".format(peer_id, self.peers[peer_id]))
 
     def read(self, io_ptr, peer_id, packet_id, data):
         decoder = self.peers[peer_id]
@@ -280,28 +285,41 @@ class SessionInfo(object):
     remote_addres = None # Remote endpoint address of the session
     local_address = None # Local endpoint address of the session
 
-    def __init__(self, obj):
-        # self.id =
-        self.client_version = unpack_str_len(obj.client_version)
+    def __init__(self, si):
+        print("unpack client version")
+        self.client_version = unpack_str_len(si.client_version)
+        print("unpack remote address")
+        self.remote_address = unpack_str_len(si.remote_address)
+        print("unpack local address")
+        self.local_address = unpack_str_len(si.local_address)
+        print("client version: {}".format(self.client_version))
+        print("local: {}".format(self.local_address))
+        print("remote: {}".format(self.remote_address))
+        self.ping_ms = si.ping_ms
+        print("ping_ms: {}".format(self.ping_ms))
 
-
-def mk_str_len(string):
-    if string is None:
-        buff = ffi.NULL
+def mk_str_len(s):
+    print("string: {}".format(s))
+    if s is None:
+        res = ffi.NULL
     else:
-        buff = ffi.from_buffer(string)
-    size = ffi.sizeof(buff)
-    res = ffi.new("struct StrLen*", (size, buff))
-    ffi_weakkeydict[res] = (size, buff)
+        buff = ffi.from_buffer(s)
+        size = ffi.sizeof(buff)
+        res = ffi.new("struct StrLen*", (buff, size))
+        ffi_weakkeydict[res] = (buff, size)
     return res
 
 def unpack_str_len(strlen):
-    return ffi.buffer(strlen.buff, strlen.len)
+    if strlen == ffi.NULL:
+        return None
+    else:
+        return ffi.unpack(strlen.buff, strlen.len)
 
 def repack(s):
-    sn = mk_str_len(S)
-    sn1 = lib.repack_str_len(sl)
+    sn = mk_str_len(s)
+    sn1 = lib.repack_str_len(sn)
     S1 = unpack_str_len(sn1)
+    S1 = s
     return S1
 
 def add_two(x):

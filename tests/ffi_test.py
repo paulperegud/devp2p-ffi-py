@@ -9,15 +9,14 @@ import pytest
 import time
 import socket
 
-
-def test_build():
-    x = add_two(8)
-    assert x == 10
+# def test_build():
+#     x = add_two(8)
+#     assert x == 10
 
 def test_strlen():
-    S = "hello, world!"
-    S1 = repack(S)
-    assert S1 == S
+    assert "hello, world!" == repack("hello, world!")
+    assert None == repack(None)
+    time.sleep(1)
 
 # def test_Configuration_config_path():
 #     register("config_path", "/tmp/devp2p_config_path")

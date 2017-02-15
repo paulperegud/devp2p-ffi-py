@@ -9,7 +9,24 @@ def get_ffi(**kwargs):
     kwargs['include_dirs'] = [absolute("../devp2p-ffi/include/")]
     kwargs['library_dirs'] = [absolute("../devp2p-ffi/target/release/")]
     kwargs['extra_link_args'] = ['-Wl,-rpath=$ORIGIN']
-    ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>' , **kwargs)
+
+    includes_and_code ="""
+    #include <libdevp2p_ffi.h>
+    #include <stdio.h>
+
+    void cffidisplay(struct StrLen* ptr) {
+       printf("c ptr value %d   ---------------- ", ptr);
+       putchar('[');
+       for (int i=0; i<15; i++) {
+         putchar(ptr->buff[i]);
+         putchar(' ');
+       }
+       putchar(']');
+       printf("________________________");
+    };
+
+    """
+    ffibuilder.set_source("cffi_devp2p", includes_and_code, **kwargs)
     ffibuilder.cdef("""
 
     extern "Python+C" void initialize_cb(void*, void*);
@@ -24,8 +41,8 @@ def get_ffi(**kwargs):
     typedef void (*DisconnectedCB)(void*, void*, size_t);
 
     struct StrLen {
-        size_t len;
         char* buff;
+        size_t len;
     };
 
     struct BootNodes {
@@ -33,12 +50,13 @@ def get_ffi(**kwargs):
         struct StrLen** nodes;
     };
 
-    //struct SessionInfo {
-    //    char* id;
-    //    struct StrLen* client_version;
-    //    struct StrLen* remote_address;
-    //    struct StrLen* local_address;
-    //};
+    struct SessionInfo {
+        char* id;
+        struct StrLen* client_version;
+        struct StrLen* remote_address;
+        struct StrLen* local_address;
+        uint64_t ping_ms;
+    };
 
     struct Configuration {
         struct StrLen* config_path;
@@ -80,14 +98,15 @@ def get_ffi(**kwargs):
                        size_t peer, uint8_t packet, char* buffer, size_t size);
     uint8_t protocol_reply(void* io, size_t peer, uint8_t packet, char* buffer, size_t size);
 
-    // void* peer_session_info(void* io_ptr, size_t peer_id, uint8_t* errno);
-    // void peer_session_info_free(void* ptr);
+    struct SessionInfo* peer_session_info(void* io_ptr, size_t peer_id, unsigned char* errno);
+    void peer_session_info_free(void* ptr);
     uint8_t network_service_add_reserved_peer(void*, char*);
 
     char* network_service_node_name(void*);
 
 
-    // void* repack_str_len(struct StrLen* ptr);
+    struct StrLen* repack_str_len(struct StrLen* ptr);
+    void cffidisplay(struct StrLen* ptr);
 
     """)
     return ffibuilder
