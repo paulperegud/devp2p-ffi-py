@@ -295,8 +295,8 @@ class SessionInfo(object):
         print("client version: {}".format(self.client_version))
         print("local: {}".format(self.local_address))
         print("remote: {}".format(self.remote_address))
-        self.ping_ms = si.ping_ms
-        print("ping_ms: {}".format(self.ping_ms))
+        # self.ping_ms = si.ping_ms
+        # print("ping_ms: {}".format(self.ping_ms))
 
 def mk_str_len(s):
     print("string: {}".format(s))

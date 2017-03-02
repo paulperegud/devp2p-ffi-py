@@ -55,7 +55,6 @@ def get_ffi(**kwargs):
         struct StrLen* client_version;
         struct StrLen* remote_address;
         struct StrLen* local_address;
-        uint64_t ping_ms;
     };
 
     struct Configuration {
