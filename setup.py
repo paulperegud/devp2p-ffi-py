@@ -46,7 +46,7 @@ setup(
     cmdclass={
         # This enables 'setup.py build_rust', and makes it run
         # 'cargo extensions/cargo.toml' before building your package.
-        'build_rust': build_rust_cmdclass('devp2p-ffi/Cargo.toml'),
+        'build_rust': build_rust_cmdclass('devp2p-ffi/Cargo.toml', True),
         # This causes your rust binary to be automatically installed
         # with the package when install_lib runs (including when you
         # run 'setup.py install'.

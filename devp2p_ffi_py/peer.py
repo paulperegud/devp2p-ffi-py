@@ -17,6 +17,7 @@ class Peer(object):
     remote_client_version = ''
     protocols = {}
     peer_id = None
+    _session_info = None  # SessionInfo
 
     def __init__(self, peermanager, peer_id, remote_pubkey=None):
         self.protocols = OrderedDict()
@@ -47,7 +48,7 @@ class Peer(object):
 
     def session_info(self):
         """Node ID and other data is in session.rs / SessionInfo"""
-        raise NotImplemented()
+        return self._session_info
 
     def report_error(self, reason):
         # try:

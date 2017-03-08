@@ -7,7 +7,7 @@ def get_ffi(**kwargs):
     ffibuilder = cffi.FFI()
     kwargs['libraries'] = ["devp2p_ffi"]
     kwargs['include_dirs'] = [absolute("../devp2p-ffi/include/")]
-    kwargs['library_dirs'] = [absolute("../devp2p-ffi/target/release/")]
+    kwargs['library_dirs'] = [absolute("../build/lib.linux-x86_64-2.7/")]
     kwargs['extra_link_args'] = ['-Wl,-rpath=$ORIGIN']
     ffibuilder.set_source("cffi_devp2p", '#include <libdevp2p_ffi.h>' , **kwargs)
     ffibuilder.cdef("""
@@ -49,6 +49,13 @@ def get_ffi(**kwargs):
         DisconnectedCB disconnect;
     };
 
+    struct SessionInfo {
+        char* id;
+        char* client_version;
+        char* remote_address;
+        char* local_address;
+    };
+
     void* config_local();
     void* config_with_port(uint16_t port);
     void* config_detailed(struct Configuration*, unsigned char* errno);
@@ -74,6 +81,9 @@ def get_ffi(**kwargs):
 
     uint8_t network_service_add_reserved_peer(void*, char*);
     char* network_service_node_name(void*);
+
+    struct SessionInfo* peer_session_info(void* io_ptr, size_t peer_id, unsigned char* errno);
+    void peer_session_info_free(struct SessionInfo* ptr);
 
     """)
     return ffibuilder

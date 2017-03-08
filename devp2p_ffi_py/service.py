@@ -166,7 +166,8 @@ class ProtocolFFI(object):
 
     def peer_protocol_version(self, context, peer_id):
         errno = ffi.new("unsigned char *")
-        res = lib.peer_protocol_version(context, peer_id, errno)
+        protocol_id = ffi.new("char[]", self.protocol_id)
+        res = lib.peer_protocol_version(context, protocol_id, peer_id, errno)
         if errno[0] != 0:
             raise_errno(errno[0], "Peer unknown or using wrong subprotocol")
         return res
@@ -179,6 +180,11 @@ class ProtocolFFI(object):
         protocolffi = self
         peer = self.service.register_peer(protocolffi, peer_id)
         decoder = self.decoder_klass(peer, self)
+        decoder.peer_protocol_version = self.peer_protocol_version(io_ptr, peer_id)
+        decoder.enode = self.peer_protocol_version(io_ptr, peer_id)
+        errno = ffi.new("unsigned char *")
+        sessobj = lib.peer_session_info(io_ptr, peer_id, errno)
+        decoder.session_info = SessionInfo(sessobj)
         self.peers[peer_id] = decoder
 
     def read(self, io_ptr, peer_id, packet_id, data):
@@ -237,7 +243,9 @@ class Config(object):
             if lst:
                 pyarr = [ mk_str_len(bn) for bn in self.boot_nodes ]
                 struct = ffi.new("struct StrLen *[]", pyarr)
+                ffi_weakkeydict[struct] = pyarr
                 ptr = ffi.new("struct BootNodes*", (len(pyarr), struct))
+                ffi_weakkeydict[ptr] = struct
                 return ptr
             else:
                 return ffi.NULL
@@ -259,6 +267,25 @@ class Config(object):
         mb_raise_errno(errno[0], "Bad arg while processing configuration")
         return res
 
+class SessionInfo(object):
+    id = None  # Peer public key
+    client_version = None  # Peer client ID
+    protocol_version = None  # Peer RLPx protocol version
+    capabilities = None  # Session protocol capabilities
+    peer_capabilities = None  # Peer protocol capabilities
+    ping_ms = None  # Peer ping delay in milliseconds
+    originated = None  # True if this session was originated by us
+    remote_addres = None  # Remote endpoint address of the session
+    local_address = None  # Local endpoint address of the session
+    NativeSessionInfo = None
+
+    def __init__(self, obj):
+        self.NativeSessionInfo = obj
+        self.client_version = ffi.string(obj.client_version)
+
+    def __del__(self):
+        lib.peer_session_info_free(self.NativeSessionInfo)
+
 def mk_str_len(string):
     if string is None:
         buff = ffi.NULL
@@ -266,7 +293,7 @@ def mk_str_len(string):
         buff = ffi.from_buffer(string)
     size = ffi.sizeof(buff)
     res = ffi.new("struct StrLen*", (size, buff))
-    ffi_weakkeydict[res] = (size, buff)
+    ffi_weakkeydict[res] = buff
     return res
 
     # # Enable NAT configuration
